@@ -17,6 +17,8 @@
     </style>
   </head>
   <body>
+    <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
+    <button id="logout-button" style="display: none">Logout</button>
     <button id="dark-mode-toggle" style="float: right">🌙 Dark Mode</button>
     <div class="leaderboard-container">
       <div class="leaderboard-content">
@@ -36,6 +38,49 @@
     <button onclick="loadLeaderboard()">Refresh Leaderboard</button>
     <br />
     <button id="restart-button" onclick="restartQuiz()">Restart Quiz</button>
+    <p id="user-info"></p>
+    <script>
+      // Google Auth UI logic (copied from index.html)
+      document.addEventListener("DOMContentLoaded", function () {
+        firebase.auth().onAuthStateChanged(function(user) {
+          const leaderboard = document.querySelector(".leaderboard-container");
+          const userInfo = document.getElementById("user-info");
+          const signInBtn = document.getElementById("google-signin-btn");
+          const logoutBtn = document.getElementById("logout-button");
+          if (user) {
+            // Save user info to localStorage for consistency
+            localStorage.setItem("playerName", user.displayName);
+            localStorage.setItem("playerEmail", user.email);
+            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
+            leaderboard.style.display = "block";
+            signInBtn.style.display = "none";
+            logoutBtn.style.display = "inline-block";
+          } else {
+            userInfo.textContent = "";
+            leaderboard.style.display = "none";
+            signInBtn.style.display = "inline-block";
+            logoutBtn.style.display = "none";
+          }
+        });
+      });
+      function signInWithGoogle() {
+        var provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(provider);
+      }
+      (function ensureLogoutHandler() {
+        var btn = document.getElementById("logout-button");
+        if (btn) {
+          btn.onclick = function () {
+            firebase.auth().signOut();
+          };
+        } else {
+          document.addEventListener("DOMContentLoaded", function () {
+            var btn2 = document.getElementById("logout-button");
+            if (btn2) btn2.onclick = function () { firebase.auth().signOut(); };
+          });
+        }
+      })();
+    </script>
     <script>
       window.onload = function () {
         endQuiz();

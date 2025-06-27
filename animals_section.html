@@ -3,6 +3,7 @@
   <head>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fun Quiz || Animals Section</title>
@@ -28,49 +29,20 @@
     /></a>
   </head>
   <body>
+    <button id="google-signin-btn" onclick="signInWithGoogle()">
+      Sign in with Google
+    </button>
     <button id="logout-button" style="display: none">Logout</button>
     <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
     <a href="math_section.html" style="display: block">math section</a>
     <a href="reading_section.html" style="display: block">reading section</a>
-    <a href="brain_teasers.html" style="display: block"
-      >brain teasers section</a
-    >
+    <a href="brain_teasers.html" style="display: block">brain teasers section</a>
     <a href="colors_section.html" style="display: block">colors section</a>
     <button onclick="goBackAnIndex()">go back a question</button>
     <button onclick="goForwardAnIndex()">go forward a question</button>
-
-    <script>
-      // Show the link only if logged in
-      if (
-        localStorage.getItem("playerName") &&
-        localStorage.getItem("playerEmail")
-      ) {
-        document.getElementById("brain-link").style.display = "inline";
-      }
-    </script>
     <p id="user-info"></p>
     <div class="body-container">
-      <div id="start-form">
-        <input
-          type="text"
-          id="player-name"
-          placeholder="Your Full Name"
-          autocomplete="off"
-        /><br />
-        <br />
-        <div style="display: flex; align-items: center">
-          <input
-            type="text"
-            id="player-email"
-            placeholder="Your CCHS Username"
-            autocomplete="off"
-            style="width: 200px"
-          />
-          <span style="margin-left: 4px">@centralcatholic.org</span>
-        </div>
-        <button onclick="startQuiz()">Start Quiz</button>
-      </div>
-
+      <!-- Remove old start-form login -->
       <div id="quiz-container" style="display: none">
         <marquee class="marqueeH1" direction="right">
           <h1>FUN QUIZ ANIMALS SECTION !!!</h1>
@@ -139,7 +111,55 @@
         </div>
       </div>
     </div>
+    <script src="custom.js"></script>
     <script src="script.js"></script>
+    <script>
+      // Google Auth UI logic (copied from index.html)
+      document.addEventListener("DOMContentLoaded", function () {
+        firebase.auth().onAuthStateChanged(function(user) {
+          const quizContainer = document.getElementById("quiz-container");
+          const leaderboard = document.querySelector(".leaderboard-container");
+          const userInfo = document.getElementById("user-info");
+          const signInBtn = document.getElementById("google-signin-btn");
+          const logoutBtn = document.getElementById("logout-button");
+          if (user) {
+            // Save user info to localStorage for consistency
+            localStorage.setItem("playerName", user.displayName);
+            localStorage.setItem("playerEmail", user.email);
+            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
+            quizContainer.style.display = "block";
+            leaderboard.style.display = "block";
+            signInBtn.style.display = "none";
+            logoutBtn.style.display = "inline-block";
+          } else {
+            userInfo.textContent = "";
+            quizContainer.style.display = "none";
+            leaderboard.style.display = "none";
+            signInBtn.style.display = "inline-block";
+            logoutBtn.style.display = "none";
+          }
+        });
+      });
+      function signInWithGoogle() {
+        var provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(provider);
+      }
+      // Always attach logout event handler, even if DOMContentLoaded hasn't fired
+      (function ensureLogoutHandler() {
+        var btn = document.getElementById("logout-button");
+        if (btn) {
+          btn.onclick = function () {
+            firebase.auth().signOut();
+          };
+        } else {
+          // Try again after DOM is loaded
+          document.addEventListener("DOMContentLoaded", function () {
+            var btn2 = document.getElementById("logout-button");
+            if (btn2) btn2.onclick = function () { firebase.auth().signOut(); };
+          });
+        }
+      })();
+    </script>
     <script>
       var questions = [
         {
@@ -416,7 +436,6 @@
         }
       }
     </script>
-    <script src="custom.js"></script>
     <script>
       function goBackAnIndex() {
         // Check if the current question index is greater than 0

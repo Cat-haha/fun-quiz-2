@@ -46,56 +46,24 @@
     /></a>
   </head>
   <body>
+    <button id="google-signin-btn" onclick="signInWithGoogle()">
+      Sign in with Google
+    </button>
     <button id="logout-button" style="display: none">Logout</button>
     <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
-    <a id="brain-link" href="brain_teasers.html" style="display: none"
-      >brain teasers</a
-    >
+    <a id="brain-link" href="brain_teasers.html" style="display: none">brain teasers</a>
     <button onclick="goBackAnIndex()">go back a question</button>
     <button onclick="goForwardAnIndex()">go forward a question</button>
-    <script>
-      // Show the link only if logged in
-      if (
-        localStorage.getItem("playerName") &&
-        localStorage.getItem("playerEmail")
-      ) {
-        document.getElementById("brain-link").style.display = "inline";
-      }
-    </script>
     <p id="user-info"></p>
     <div class="body-container">
-<div id="start-form">
-  <input
-    type="text"
-    id="player-name"
-    placeholder="Your Full Name"
-    autocomplete="off"
-  /><br /> <br />
-  <div style="display: flex; align-items: center;">
-    <input
-      type="text"
-      id="player-email"
-      placeholder="Your CCHS Username"
-      autocomplete="off"
-      style="width: 200px;"
-    />
-    <span style="margin-left: 4px;">@centralcatholic.org</span>
-  </div>
-  <button onclick="startQuiz()">Start Quiz</button>
-</div>
-
+      <!-- Removed old start-form login -->
       <div id="quiz-container" style="display: none">
         <marquee class="marqueeH1" direction="right">
           <h1>FUN QUIZ COLORS SECTION !!!</h1>
         </marquee>
         <p>
           Based off of MY GOAT ETHAN'S
-          <a
-            href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
-            target="_blank"
-          >
-            FUN QUIZ!! </a
-          ><br /><br />
+          <a target="_blank">FUN QUIZ!! </a><br /><br />
           please try to be EXACT with your answers so you possibly get it right.
           no typos, no weird phrasing. thank you! also don't blame me for the
           numbers being out of order... this is based off of Ethan's quiz, not
@@ -129,58 +97,6 @@
           </div>
         </div>
       </div>
-      <div
-        id="transition-overlay"
-        style="
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(0, 0, 0, 0.85);
-          z-index: 9999;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        "
-      >
-        <img
-          src="https://i.postimg.cc/Y24df0Gq/image.png"
-          alt="Transition"
-          style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
-        />
-        <br />
-        <button id="continue-btn" style="font-size: 2em; margin-top: 2em">
-          Continue
-        </button>
-      </div>
-      <div
-        id="end-transition-overlay"
-        style="
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(0, 0, 0, 0.85);
-          z-index: 9999;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        "
-      >
-        <img
-          src="https://i.postimg.cc/RZPWQ0MR/image.png"
-          alt="End Transition"
-          style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
-        />
-        <br />
-        <button id="end-continue-btn" style="font-size: 2em; margin-top: 2em">
-          Continue
-        </button>
-      </div>
       <div class="leaderboard-container">
         <div class="leaderboard-content">
           <h2>Leaderboard</h2>
@@ -196,6 +112,53 @@
         </div>
       </div>
     </div>
+    <script src="custom.js"></script>
+    <script src="script.js"></script>
+    <script>
+      // Google Auth UI logic (copied from index.html)
+      document.addEventListener("DOMContentLoaded", function () {
+        firebase.auth().onAuthStateChanged(function(user) {
+          const quizContainer = document.getElementById("quiz-container");
+          const leaderboard = document.querySelector(".leaderboard-container");
+          const userInfo = document.getElementById("user-info");
+          const signInBtn = document.getElementById("google-signin-btn");
+          const logoutBtn = document.getElementById("logout-button");
+          if (user) {
+            // Save user info to localStorage for consistency
+            localStorage.setItem("playerName", user.displayName);
+            localStorage.setItem("playerEmail", user.email);
+            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
+            quizContainer.style.display = "block";
+            leaderboard.style.display = "block";
+            signInBtn.style.display = "none";
+            logoutBtn.style.display = "inline-block";
+          } else {
+            userInfo.textContent = "";
+            quizContainer.style.display = "none";
+            leaderboard.style.display = "none";
+            signInBtn.style.display = "inline-block";
+            logoutBtn.style.display = "none";
+          }
+        });
+      });
+      function signInWithGoogle() {
+        var provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(provider);
+      }
+      (function ensureLogoutHandler() {
+        var btn = document.getElementById("logout-button");
+        if (btn) {
+          btn.onclick = function () {
+            firebase.auth().signOut();
+          };
+        } else {
+          document.addEventListener("DOMContentLoaded", function () {
+            var btn2 = document.getElementById("logout-button");
+            if (btn2) btn2.onclick = function () { firebase.auth().signOut(); };
+          });
+        }
+      })();
+    </script>
     <script>
       var questions = [
         {
@@ -395,8 +358,6 @@
         }
       }
     </script>
-    <script src="custom.js"></script>
-    <script src="script.js"></script>
     <script>
       // Dark mode toggle
       const darkModeBtn = document.getElementById("dark-mode-toggle");
