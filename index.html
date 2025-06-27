@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script>
+      // Initialize Firebase (must be before any usage)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCDlykaXg7KdQPv3jeCOrnRV1Z_6P1n5S0",
+        authDomain: "funquiz-f5177.firebaseapp.com",
+        projectId: "funquiz-f5177",
+        storageBucket: "funquiz-f5177.appspot.com",
+        messagingSenderId: "243832133348",
+        appId: "1:243832133348:web:03d6746d63388112417ef1",
+        measurementId: "G-RG453ZV61K"
+      };
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fun Quiz || Warmup Section</title>
+    <link rel="stylesheet" href="style.css" />
+    <style type="text/css">
+      * {
+        cursor: url(https://cur.cursors-4u.net/cursors/cur-2/cur116.cur), auto !important;
+      }
+      body {
+        background: linear-gradient(135deg, #06FD00, #8FCD00, #E59237)
+      }
+    </style>
+    <a
+      href="https://www.cursors-4u.com/cursor/2008/12/17/cool-blue-outer-glow-pointer.html"
+      target="_blank"
+      title="Cool Blue Outer Glow Pointer"
+      ><img
+        src="https://cur.cursors-4u.net/cursor.png"
+        style="display: none"
+        border="0"
+        alt="Cool Blue Outer Glow Pointer"
+        style="position: absolute; top: 0px; right: 0px"
+    /></a>
+  </head>
+  <body>
+    <button id="logout-button" style="display: none">Logout</button>
+    <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
+    <a href="math_section.html" style="display: block">math section</a>
+    <a href="reading_section.html" style="display: block">reading section</a>
+    <a href="brain_teasers.html" style="display: block">brain teasers section</a>
+    <a href="colors_section.html" style="display: block">colors section</a>
+    <a href="geography_section.html" style="display: block">geoegraphy section</a>
+    <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
+    <p id="user-info"></p>
+    <div class="body-container">
+<!-- ...existing code... -->
+
+
+      <div id="quiz-container" style="display: none">
+        <marquee class="marqueeH1" direction="right">
+          <h1>FUN QUIZ WARMUP SECTION !!!</h1>
+        </marquee>
+        <p>
+          Based off of MY GOAT ETHAN'S
+          <a
+            href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
+            target="_blank"
+          >
+            FUN QUIZ!! </a
+          ><br /><br />
+          please try to be EXACT with your answers so you possibly get it right.
+          no typos, no weird phrasing. thank you! also don't blame me for the
+          numbers being out of order... this is based off of Ethan's quiz, not
+          my information.
+        </p>
+        <div id="progress" style="margin-bottom: 10px; display: none"></div>
+        <br /><br />
+        <!-- Quiz UI starts here -->
+        <div class="quiz-ui">
+          <div id="question-area">
+            <div id="question">Loading...</div>
+            <img id="question-image" src="" />
+            <input
+              type="text"
+              id="answer"
+              placeholder="Type your answer..."
+              autocomplete="off"
+            />
+            <span id="suggestion-box"></span>
+            <ul id="suggestions"></ul>
+            <button onclick="submitAnswer()">Submit</button>
+            <button id="next-button" onclick="goToNextQuestion()">
+              Next Question
+            </button>
+            <button onclick="goBackAnIndex()">Go Back</button>
+            <button onclick="goForwardAnIndex()">Go Forward</button>
+          </div>
+          <div class="feedback-area">
+            <div id="feedback"></div>
+            <img id="feedback-image" src="" />
+            <div id="correct-answer" style="display: none"></div>
+          </div>
+        </div>
+      </div>
+      <div class="leaderboard-container">
+        <div class="leaderboard-content">
+          <h2>Leaderboard</h2>
+          <table id="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- Move scripts here to ensure Firebase is initialized and DOM is ready -->
+    <script src="custom.js"></script>
+    <script src="script.js"></script>
+    <script>
+      // Google Auth UI logic
+      document.addEventListener("DOMContentLoaded", function () {
+        firebase.auth().onAuthStateChanged(function(user) {
+          const quizContainer = document.getElementById("quiz-container");
+          const leaderboard = document.querySelector(".leaderboard-container");
+          const userInfo = document.getElementById("user-info");
+          const signInBtn = document.getElementById("google-signin-btn");
+          const logoutBtn = document.getElementById("logout-button");
+          if (user) {
+            // Save user info to localStorage for consistency
+            localStorage.setItem("playerName", user.displayName);
+            localStorage.setItem("playerEmail", user.email);
+            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
+            quizContainer.style.display = "block";
+            leaderboard.style.display = "block";
+            signInBtn.style.display = "none";
+            logoutBtn.style.display = "inline-block";
+          } else {
+            userInfo.textContent = "";
+            quizContainer.style.display = "none";
+            leaderboard.style.display = "none";
+            signInBtn.style.display = "inline-block";
+            logoutBtn.style.display = "none";
+          }
+        });
+      });
+    </script>
+    <script>
+      var questions = [
+        {
+          question: "#1. What's this?",
+          answer: "lettuce",
+          image: "https://i.postimg.cc/ZYwVzc6t/image-2025-05-07-210118794.png",
+          feedbackImage:
+            "https://i.postimg.cc/N0vxkPvT/image-2025-05-07-210211060.png",
+        },
+        {
+          question: "#2. What's this?",
+          answer: "lettuce",
+          image: "https://i.postimg.cc/x1fmjDQ6/image-2025-05-07-211843827.png",
+          feedbackImage:
+            "https://i.postimg.cc/vZ0VcqHb/image-2025-05-07-211940039.png",
+        },
+        {
+          question: "#3. What's this?",
+          answer: "cheese",
+          image: "https://i.postimg.cc/SK5YGnMP/image-2025-05-07-212050885.png",
+          feedbackImage:
+            "https://i.postimg.cc/zBgb2qwG/image-2025-05-07-212115211.png",
+        },
+        {
+          question: "#4. What's this?",
+          answer: [
+            "the concept of the color blue",
+            "blue",
+            "concept of the color blue",
+            "concept of blue",
+            "the concept of blue",
+          ],
+          image: "https://i.postimg.cc/fy73Z5r4/image-2025-05-07-212228619.png",
+          feedbackImage:
+            "https://i.postimg.cc/QNcKpxx6/image-2025-05-07-212254297.png",
+        },
+        {
+          question:
+            "#5. This landmass is the largest pile of garbage in the world and is located in the Atlantic Ocean",
+          answer: ["great britain", "uk", "the uk", "united kingdom"],
+          feedbackImage:
+            "https://i.postimg.cc/bwV9KNnx/image-2025-05-07-213857100.png",
+        },
+        {
+          question: "#6. What's this?",
+          answer: "cheese",
+          image: "https://i.postimg.cc/13FzZvnv/image-2025-05-07-214411496.png",
+          feedbackImage:
+            "https://i.postimg.cc/DzdySmcs/image-2025-05-07-214448845.png",
+        },
+        {
+          question: "#7. What's this?",
+          answer: "spinach",
+          image: "https://i.postimg.cc/x879wm0r/image-2025-05-07-214604298.png",
+          feedbackImage:
+            "https://i.postimg.cc/RCbC6kwP/image-2025-05-07-214709003.png",
+        },
+        {
+          question: "#8. What's this?",
+          answer: "red lettuce",
+          image: "https://i.postimg.cc/Yq5p8QnY/image-2025-05-07-214753670.png",
+          feedbackImage:
+            "https://i.postimg.cc/TP9fRFRJ/image-2025-05-07-214848136.png",
+        },
+        {
+          question:
+            "#9. This landmass is the largest pile of garbage in the world and is located in the Pacific Ocean",
+          answer: ["great pacific garbage patch", "gpgp", "australia"],
+          feedbackImage:
+            "https://i.postimg.cc/bwV9KNnx/image-2025-05-07-213857100.png",
+        },
+        {
+          question: "#10. What's this?",
+          answer: ["castle", "a castle", "the castle"],
+          image: "https://i.postimg.cc/13K7jQRP/image-2025-05-07-222522503.png",
+          feedbackImage:
+            "https://i.postimg.cc/tgSS9NVM/image-2025-05-07-222555230.png",
+        },
+        {
+          question: "#11. What's this?",
+          answer: "digiorno",
+          image: "https://i.postimg.cc/y8J1Lqzj/unnamed.png",
+          feedbackImage: "https://i.postimg.cc/NFfYTS41/unnamed-1.png",
+          hintImage: "https://i.postimg.cc/bNqwbpH2/image.png",
+        },
+        {
+          question: "#12. Where's Waldo? (Click the image)",
+          image: "https://i.postimg.cc/mDVk0Qpy/unnamed.jpg",
+          answer: "click",
+          feedbackImage:
+            "https://i.postimg.cc/3xM8fSJH/Screenshot-2025-05-08-9-04-23-AM.png",
+          type: "click",
+          correctAnswer: "click on Waldo's location",
+          waldoX: 40,
+          waldoY: 220,
+        },
+        {
+          question: "#13. What's this?",
+          answer: "lettuce",
+          image: "https://i.postimg.cc/D0t3gJjn/unnamed-1.png",
+          feedbackImage: "https://i.postimg.cc/Wbkv48z3/unnamed.png",
+        },
+        {
+          question: "#14. What's this?",
+          answer: [
+            "lettuce now with vertical rotation",
+            "vertical rotation lettuce",
+            "vertical lettuce",
+            "vertically rotating lettuce",
+            "lettuce",
+            "rotating lettuce",
+          ],
+          image: "https://i.postimg.cc/CLkx2Sjm/unnamed.gif",
+          feedbackImage:
+            "https://i.postimg.cc/pybfT97N/Vertically-Rotating-Lettuce.gif",
+        },
+        {
+          question: "#15. What's this?",
+          answer: ["cat", "a cat", "the cat"],
+          image: "https://i.postimg.cc/L5zFx4rP/unnamed-2.png",
+          feedbackImage: "https://i.postimg.cc/020qmQGR/unnamed-1.gif",
+        },
+        {
+          question: "#16. What's this?",
+          answer: ["mountain", "a mountain", "the mountain"],
+          image: "https://i.postimg.cc/mrtx0yvB/unnamed-3.png",
+          feedbackImage: "https://i.postimg.cc/90PsG87t/unnamed-4.png",
+        },
+        {
+          question: "#17. What was the original, non-diffused image?",
+          answer: ["deep fryer", "a deep fryer", "the deep fryer"],
+          image: "https://i.postimg.cc/90PsG87t/unnamed-4.png",
+          feedbackImage: "https://i.postimg.cc/vTyNHrN1/unnamed-5.png",
+        },
+        {
+          question: "#18. What's this?",
+          answer: "lettuce",
+          image: "https://i.postimg.cc/QdnN9CsN/unnamed-7.png",
+          feedbackImage: "https://i.postimg.cc/3wsK1qdP/unnamed-8.png",
+        },
+        {
+          question: "#19. What are these?",
+          answer: ["limes", "green lemons"],
+          image: "https://i.postimg.cc/8CM8pzz0/unnamed-9.png",
+          feedbackImage: "https://i.postimg.cc/Y9zJFDgN/unnamed.jpg",
+        },
+      ];
+
+      function goToNextQuestion() {
+        hasSuggested = false;
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+
+          // After the quiz ends, wait for a key press to go to next section
+          alert(
+            "You finished the Warmup Section! Now taking you to the Math Section. Press any key to continue."
+          );
+          document.addEventListener(
+            "keydown",
+            function () {
+              window.location.href = "math_section.html";
+            },
+            { once: true }
+          );
+        } else {
+          // Save and load the next question
+          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+        }
+      }
+    </script>
+    <script>
+      // Dark mode toggle
+      const darkModeBtn = document.getElementById("dark-mode-toggle");
+      darkModeBtn.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+        // Save preference to localStorage
+        localStorage.setItem(
+          "darkMode",
+          document.body.classList.contains("dark-mode")
+        );
+      });
+
+      // On page load, restore preference
+      if (localStorage.getItem("darkMode") === "true") {
+        document.body.classList.add("dark-mode");
+      }
+    </script>
+    <script>
+      function submitAnswer() {
+        const answerInput = document.getElementById("answer");
+        const userAnswer = answerInput.value.trim();
+        const question = questions[currentQuestionIndex];
+        const feedback = document.getElementById("feedback");
+        const feedbackImage = document.getElementById("feedback-image");
+        const nextButton = document.getElementById("next-button");
+        const correctAnswerDiv = document.getElementById("correct-answer");
+
+        feedback.innerHTML = "";
+        feedbackImage.style.display = "none";
+        correctAnswerDiv.style.display = "none";
+
+        if (question.type === "click") return;
+
+        // === Lettuce easter egg for Digiorno (#11) only ===
+        if (
+          currentQuestionIndex === 10 &&
+          userAnswer.trim().toLowerCase() === "lettuce"
+        ) {
+          feedback.textContent = "HINT: It's not lettuce";
+          if (question.hintImage) {
+            feedbackImage.src = question.hintImage;
+            feedbackImage.style.display = "block";
+          }
+          return;
+        }
+
+        // === Digiorno special feedback for #11 ===
+        if (currentQuestionIndex === 10) {
+          const digiornoAnswers = [
+            "digiorno",
+            "it's digiorno",
+            "its digiorno",
+            "di giorno",
+            "di-giorno",
+          ];
+          const userAns = userAnswer.trim().toLowerCase();
+          if (digiornoAnswers.includes(userAns)) {
+            feedback.textContent = `✅ Correct! It's Digiorno!`;
+            suggestionBox.style.display = "none";
+            let answeredQuestions = JSON.parse(
+              localStorage.getItem("answeredQuestions") || "[]"
+            );
+            if (!answeredQuestions.includes(currentQuestionIndex)) {
+              currentScore++;
+              updateUserInfo();
+              localStorage.setItem("currentScore", currentScore);
+              answeredQuestions.push(currentQuestionIndex);
+              localStorage.setItem(
+                "answeredQuestions",
+                JSON.stringify(answeredQuestions)
+              );
+              question.answeredCorrectly = true;
+            }
+            // Always show correct answer(s)
+            correctAnswerDiv.textContent = `Correct answer(s): digiorno`;
+            correctAnswerDiv.style.display = "block";
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+            nextButton.style.display = "inline-block";
+            hasSuggested = false;
+            return;
+          } else {
+            // Track attempts for this question only
+            if (typeof window.digiornoAttemptCount === "undefined") {
+              window.digiornoAttemptCount = 1;
+            } else {
+              window.digiornoAttemptCount++;
+            }
+            if (window.digiornoAttemptCount >= 2) {
+              feedback.textContent = `It's not ${userAnswer}, it's Digiorno!`;
+              suggestionBox.style.display = "none";
+              correctAnswerDiv.textContent = `Correct answer(s): digiorno`;
+              correctAnswerDiv.style.display = "block";
+              nextButton.style.display = "inline-block";
+              if (question.feedbackImage) {
+                feedbackImage.src = question.feedbackImage;
+                feedbackImage.style.display = "block";
+              }
+              // Reset for next time this question is loaded
+              window.digiornoAttemptCount = 0;
+            } else {
+              feedback.textContent = "❌ Incorrect. Try again!";
+            }
+            return;
+          }
+        }
+
+        // === Standard answer checking for all other questions ===
+        const acceptedAnswers = Array.isArray(question.answer)
+          ? question.answer.map((a) => a.trim().toLowerCase())
+          : [question.answer.trim().toLowerCase()];
+
+        const isCorrect = acceptedAnswers.includes(userAnswer.toLowerCase());
+
+        // === Log answer only once ===
+        if (!question.loggedAnswer) {
+          userAnswers.push({
+            questionIndex: currentQuestionIndex,
+            questionText: question.question,
+            userAnswer: userAnswer,
+            acceptedAnswers,
+            isCorrect,
+            questionType: "text",
+          });
+          question.loggedAnswer = true;
+
+          // 💾 Save to localStorage
+          localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+        }
+
+        // === Show feedback ===
+        if (isCorrect) {
+          feedback.textContent = "✅ Correct!";
+          suggestionBox.style.display = "none";
+
+          // Prevent infinite score abuse
+          let answeredQuestions = JSON.parse(
+            localStorage.getItem("answeredQuestions") || "[]"
+          );
+          if (!answeredQuestions.includes(currentQuestionIndex)) {
+            currentScore++;
+            updateUserInfo();
+            localStorage.setItem("currentScore", currentScore);
+            answeredQuestions.push(currentQuestionIndex);
+            localStorage.setItem(
+              "answeredQuestions",
+              JSON.stringify(answeredQuestions)
+            );
+            question.answeredCorrectly = true;
+          }
+
+          // Always show correct answer(s)
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
+            ", "
+          )}`;
+          correctAnswerDiv.style.display = "block";
+
+          if (question.feedbackImage) {
+            feedbackImage.src = question.feedbackImage;
+            feedbackImage.style.display = "block";
+          }
+          nextButton.style.display = "inline-block";
+          hasSuggested = false;
+        } else {
+          attemptCount =
+            typeof attemptCount === "undefined" ? 1 : attemptCount + 1;
+          if (attemptCount >= 2) {
+            feedback.textContent = "❌ Incorrect.";
+            suggestionBox.style.display = "none";
+
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
+              ", "
+            )}`;
+            correctAnswerDiv.style.display = "block";
+            nextButton.style.display = "inline-block";
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+          } else {
+            feedback.textContent = "❌ Incorrect. Try again!";
+          }
+        }
+      }
+    </script>
+    <script>
+      function goBackAnIndex() {
+        if (currentQuestionIndex > 0) {
+          currentQuestionIndex--;
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+          loadQuestion();
+        } else {
+          alert("You are already at the first question.");
+        }
+      }
+      function goForwardAnIndex() {
+        if (currentQuestionIndex < questions.length - 1) {
+          currentQuestionIndex++;
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+          loadQuestion();
+        } else {
+          alert("You are already at the last question.");
+        }
+      }
+    </script>
+  </body>
+</html>
