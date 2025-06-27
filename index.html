@@ -147,7 +147,23 @@
             logoutBtn.style.display = "none";
           }
         });
+        // Attach logout handler robustly
+        function attachLogoutHandler() {
+          var btn = document.getElementById("logout-button");
+          if (btn && !btn._logoutHandlerAttached) {
+            btn.onclick = function () {
+              firebase.auth().signOut();
+            };
+            btn._logoutHandlerAttached = true;
+          }
+        }
+        attachLogoutHandler();
+        new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
       });
+      function signInWithGoogle() {
+        var provider = new firebase.auth.GoogleAuthProvider();
+        firebase.auth().signInWithPopup(provider);
+      }
     </script>
     <script>
       var questions = [
