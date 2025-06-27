@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script>
+      if (
+        !localStorage.getItem("mathSectionStarted") ||
+        document.referrer.includes("index.html")
+      ) {
+        localStorage.setItem("currentQuestionIndex", "0");
+        localStorage.removeItem("answeredQuestions");
+        localStorage.setItem("mathSectionStarted", "true");
+      }
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fun Quiz || Math Section</title>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      .leaderboard-container {
+        flex: 1; /* Smaller than quiz */
+        padding: 20px;
+        max-width: 300px;
+        background-color: #f7f7f7;
+        margin-left: 20px;
+        border-radius: 12px;
+        box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+      }
+      #quiz-container {
+        flex: 3; /* Takes more space */
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f7f7f7;
+        border-radius: 12px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      #quiz-section {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        width: 100%;
+        height: 100vh;
+        box-sizing: border-box;
+        padding: 20px;
+      }
+      * {
+        cursor: url(https://cur.cursors-4u.net/cursors/cur-2/cur116.cur), auto !important;
+      }
+      body {
+        background: linear-gradient(135deg, #ff0200, #ff8200, #fffe00);
+      }
+    </style>
+  </head>
+  <body>
+    <button id="logout-button" style="display: none">Logout</button>
+    <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
+    <p id="user-info"></p>
+    <div class="body-container">
+<div id="start-form">
+  <input
+    type="text"
+    id="player-name"
+    placeholder="Your Full Name"
+    autocomplete="off"
+  /><br /> <br />
+  <div style="display: flex; align-items: center;">
+    <input
+      type="text"
+      id="player-email"
+      placeholder="Your CCHS Username"
+      autocomplete="off"
+      style="width: 200px;"
+    />
+    <span style="margin-left: 4px;">@centralcatholic.org</span>
+  </div>
+  <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+      <div id="quiz-container" style="display: none">
+        <marquee class="marqueeH1" direction="right">
+          <h1>FUN QUIZ MATH SECTION !!!</h1>
+        </marquee>
+        <p>
+          Based off of MY GOAT ETHAN'S
+          <a
+            href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
+            target="_blank"
+          >
+            FUN QUIZ!! </a
+          ><br /><br />
+          please try to be EXACT with your answers so you possibly get it right.
+          no typos, no weird phrasing. thank you! also don't blame me for the
+          numbers being out of order... this is based off of Ethan's quiz, not
+          my information.
+        </p>
+
+        <div id="progress" style="margin-bottom: 10px; display: none"></div>
+        <!-- Quiz UI starts here -->
+
+        <div class="quiz-ui">
+          <div id="question-area">
+            <div id="question">Loading...</div>
+            <img id="question-image" src="" />
+            <input
+              type="text"
+              id="answer"
+              placeholder="Type your answer..."
+              autocomplete="off"
+            />
+            <span id="suggestion-box"></span>
+            <ul id="suggestions"></ul>
+            <button onclick="submitAnswer()">Submit</button>
+            <button id="next-button" onclick="goToNextQuestion()">
+              Next Question
+            </button>
+          </div>
+          <div class="feedback-area">
+            <div id="feedback"></div>
+            <img id="feedback-image" src="" />
+            <div id="correct-answer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="leaderboard-container">
+        <div class="leaderboard-content">
+          <h2>Leaderboard</h2>
+          <table id="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+      const questions = [
+        {
+          question: "#20. What's the measure of the angle?",
+          answer: ["91", "91 degrees", "91°"],
+          image: "https://i.postimg.cc/J7jZBwQ3/image-2025-05-08-232917115.png",
+          feedbackImage:
+            "https://i.postimg.cc/J7jZBwQ3/image-2025-05-08-232917115.png",
+        },
+        {
+          question: "#21. Whats does the equation -|52|/4 equal to?",
+          answer: ["-13"],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/hGHQfMz3/unnamed.gif",
+        },
+        {
+          question: "#22. What's this?",
+          answer: ["lettuce"],
+          image: "https://i.postimg.cc/9M5zWMK6/image-2025-05-08-233321370.png",
+          feedbackImage:
+            "https://i.postimg.cc/wxk3p9Vr/image-2025-05-08-233422795.png",
+        },
+        {
+          question: "What question [number] is this?",
+          answer: ["23"],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/J02kGpYb/23line.webp",
+        },
+        {
+          question: "#24. How many lettuce questions have there been so far?",
+          answer: ["7"],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/cL8wzjsd/unnamed-1.gif",
+        },
+        {
+          question:
+            "#25. What is the subject in the given sentence: Brady slept through his Geometry class.",
+          answer: ["brady", "geometry"],
+          image: "",
+          feedbackImage:
+            "https://i.postimg.cc/bwV9KNnx/image-2025-05-07-213857100.png",
+        },
+        {
+          question: "#26. How many degrees is it?",
+          answer: ["72"],
+          image: "https://i.postimg.cc/Z5Q8wdXv/unnamed-2.png",
+          feedbackImage:
+            "https://i.postimg.cc/yxgGQZTf/Screenshot-2025-05-09-10-50-33-AM.png",
+        },
+        {
+          question: "#27. What's this?",
+          answer: ["pineapple"],
+          image: "https://i.postimg.cc/bNbydDjH/image.png",
+          feedbackImage: "https://i.postimg.cc/xdBpkCQM/unnamed-4.png",
+        },
+        {
+          question:
+            "#28. Bill has 47 Chocolate bars. He eats 24. What does he have now?",
+          answer: ["23 chocolate bars", "23 bars", "23 chocolates", "23"],
+          image: "",
+          feedbackImage: "",
+        },
+        {
+          question: "#29. How many degrees are there?",
+          answer: [
+            "80",
+            "81",
+            "82",
+            "83",
+            "84",
+            "85",
+            "86",
+            "87",
+            "88",
+            "89",
+            "90",
+          ],
+          image: "https://i.postimg.cc/CMcDJ2Z6/unnamed-7.png",
+          feedbackImage:
+            "https://i.postimg.cc/sXk20prx/Screenshot-2025-05-09-11-01-18-AM.png",
+        },
+        {
+          question: "#30. What's this?",
+          answer: ["galaxy", "a galaxy", "the galaxy"],
+          image: "https://i.postimg.cc/MG4ZvyX5/unnamed-5.png",
+          feedbackImage: "https://i.postimg.cc/sDcVpFvv/unnamed-6.png",
+        },
+        {
+          question: "#31. 3^5 = ? (what does 3 to the power of 5 equal)",
+          answer: ["243"],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/1thtvGPt/unnamed-2.gif",
+        },
+        {
+          question:
+            "#32. Pete has 48 Chocolate bars. He gains 37 more from his aunt. ⅕ of the total chocolate bars are 2-packs. Setting the 2-packs aside and counting each 2-pack as 2 separate chocolate bars, how many total chocolate bars does Pete have?",
+          answer: ["102", "102 chocolate bars", "102 bars", "102 chocolates"],
+          image: "",
+          feedbackImage:
+            "https://i.postimg.cc/m2HT5cX1/Screenshot-2025-05-09-11-09-30-AM.png",
+        },
+        {
+          question: "#33. How many capitals are in this sentence?",
+          answer: ["6", "6 capitals", "6 capitols"],
+          image:
+            "https://i.postimg.cc/PfBCJn0Z/Screenshot-2025-05-09-11-11-25-AM.png",
+          feedbackImage:
+            "https://i.postimg.cc/8cywdPW1/Screenshot-2025-05-09-11-12-00-AM.png",
+        },
+        {
+          question: "#34. What's This?",
+          answer: ["meadow", "a meadow", "the meadow"],
+          image: "https://i.postimg.cc/xdRmNpLQ/image.png",
+          feedbackImage: "https://i.postimg.cc/3R0Df8P8/image.png",
+        },
+      ];
+
+      window.onload = function () {
+        updateUserInfo();
+      };
+
+      function goToNextQuestion() {
+        hasSuggested = false;
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+
+          // After the quiz ends, wait for a key press to go to next section
+          document.addEventListener(
+            "keydown",
+            function () {
+              window.location.href = "reading_section.html";
+            },
+            { once: true }
+          );
+        } else {
+          // Save and load the next question
+          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+        }
+      }
+    </script>
+    <script src="custom.js"></script>
+    <script src="script.js"></script>
+    <script>
+      // Dark mode toggle
+      const darkModeBtn = document.getElementById("dark-mode-toggle");
+      darkModeBtn.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+        // Save preference to localStorage
+        localStorage.setItem(
+          "darkMode",
+          document.body.classList.contains("dark-mode")
+        );
+      });
+
+      // On page load, restore preference
+      if (localStorage.getItem("darkMode") === "true") {
+        document.body.classList.add("dark-mode");
+      }
+    </script>
+    <script>
+      function submitAnswer() {
+        const answerInput = document.getElementById("answer");
+        const userAnswer = answerInput.value.trim();
+        const question = questions[currentQuestionIndex];
+        const feedback = document.getElementById("feedback");
+        const feedbackImage = document.getElementById("feedback-image");
+        const nextButton = document.getElementById("next-button");
+        const correctAnswerDiv = document.getElementById("correct-answer");
+
+        feedback.innerHTML = "";
+        feedbackImage.style.display = "none";
+        correctAnswerDiv.style.display = "none";
+
+        if (question.type === "click") return;
+
+        // === Lettuce easter egg ===
+
+        // Special logic for question 24 (index 5 in your math_section.html)
+        if (
+          question.question &&
+          question.question.includes("Brady slept through his Geometry class.")
+        ) {
+          const lower = userAnswer.toLowerCase();
+          const hasBrady = lower.includes("brady");
+          const hasGeometry = lower.includes("geometry");
+          if (hasBrady && hasGeometry) {
+            feedback.textContent = "✅ Correct!";
+            correctAnswerDiv.textContent = "Correct answer(s): brady, geometry";
+            correctAnswerDiv.style.display = "block";
+            suggestionBox.style.display = "none";
+            // Prevent infinite score abuse
+            let answeredQuestions = JSON.parse(
+              localStorage.getItem("answeredQuestions") || "[]"
+            );
+            if (!answeredQuestions.includes(currentQuestionIndex)) {
+              currentScore++;
+              updateUserInfo();
+              localStorage.setItem("currentScore", currentScore);
+              answeredQuestions.push(currentQuestionIndex);
+              localStorage.setItem(
+                "answeredQuestions",
+                JSON.stringify(answeredQuestions)
+              );
+              question.answeredCorrectly = true;
+            }
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+            nextButton.style.display = "inline-block";
+            hasSuggested = false;
+          } else if (hasBrady || hasGeometry) {
+            feedback.textContent = "Almost... (missing something...)";
+            correctAnswerDiv.style.display = "none"; // Don't show correct answer yet
+            suggestionBox.style.display = "none";
+            nextButton.style.display = "none";
+            // Show a special image for "Almost..."
+            feedbackImage.src = "https://i.postimg.cc/LsZ7Xd09/image.png"; // <-- your chosen "almost" image
+            feedbackImage.style.display = "block";
+          } else {
+            attemptCount =
+              (typeof attemptCount === "number" ? attemptCount : 0) + 1;
+            if (attemptCount >= 2) {
+              feedback.textContent = "❌ Incorrect.";
+              correctAnswerDiv.textContent =
+                "Correct answer(s): brady, geometry";
+              correctAnswerDiv.style.display = "block";
+              nextButton.style.display = "inline-block";
+              // Show the feedback image from the questions array if available
+              if (question.feedbackImage) {
+                feedbackImage.src = question.feedbackImage;
+                feedbackImage.style.display = "block";
+              }
+            } else {
+              feedback.textContent = "❌ Incorrect. Try again!";
+              correctAnswerDiv.style.display = "none";
+              nextButton.style.display = "none";
+              feedbackImage.style.display = "none";
+            }
+            suggestionBox.style.display = "none";
+          }
+          return;
+        }
+
+        const acceptedAnswers = Array.isArray(question.answer)
+          ? question.answer.map((a) => a.trim().toLowerCase())
+          : [question.answer.trim().toLowerCase()];
+
+        const isCorrect = acceptedAnswers.includes(userAnswer.toLowerCase());
+
+        // === Special case for question 0 ===
+        if (currentQuestionIndex === 0 && userAnswer.toLowerCase() === "a") {
+          feedback.textContent = "HINT: It's not lettuce";
+          if (question.hintImage) {
+            feedbackImage.src = question.hintImage;
+            feedbackImage.style.display = "block";
+          }
+          return;
+        }
+
+        // === Log answer only once ===
+        if (!question.loggedAnswer) {
+          userAnswers.push({
+            questionIndex: currentQuestionIndex,
+            questionText: question.question,
+            userAnswer: userAnswer,
+            acceptedAnswers,
+            isCorrect,
+            questionType: "text",
+          });
+          question.loggedAnswer = true;
+
+          // 💾 Save to localStorage
+          localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+        }
+
+        // === Show feedback ===
+        if (isCorrect) {
+          feedback.textContent = "✅ Correct!";
+          suggestionBox.style.display = "none";
+
+          // Prevent infinite score abuse
+          let answeredQuestions = JSON.parse(
+            localStorage.getItem("answeredQuestions") || "[]"
+          );
+          if (!answeredQuestions.includes(currentQuestionIndex)) {
+            currentScore++;
+            updateUserInfo();
+            localStorage.setItem("currentScore", currentScore);
+            answeredQuestions.push(currentQuestionIndex);
+            localStorage.setItem(
+              "answeredQuestions",
+              JSON.stringify(answeredQuestions)
+            );
+            question.answeredCorrectly = true;
+          }
+
+          if (question.feedbackImage) {
+            feedbackImage.src = question.feedbackImage;
+            feedbackImage.style.display = "block";
+          }
+
+          // Always show correct answer(s)
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
+            ", "
+          )}`;
+          correctAnswerDiv.style.display = "block";
+
+          nextButton.style.display = "inline-block";
+          hasSuggested = false;
+        } else {
+          attemptCount++;
+          if (attemptCount >= 2) {
+            feedback.textContent = "❌ Incorrect.";
+            suggestionBox.style.display = "none";
+
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
+              ", "
+            )}`;
+            correctAnswerDiv.style.display = "block";
+            nextButton.style.display = "inline-block";
+
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+          } else {
+            feedback.textContent = "❌ Incorrect. Try again!";
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

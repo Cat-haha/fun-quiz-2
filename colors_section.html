@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      window.onload();
+      // Redirect to login if not logged in
+      if (
+        !localStorage.getItem("playerName") ||
+        !localStorage.getItem("playerEmail")
+      ) {
+        window.location.href = "index.html";
+      }
+      // Only reset if coming from previous section (not on refresh)
+      if (
+        !localStorage.getItem("colorsSectionStarted") ||
+        document.referrer.includes("warmup") ||
+        document.referrer.includes("index.html")
+      ) {
+        localStorage.setItem("colorsSectionCurrentQuestionIndex", "0");
+        localStorage.removeItem("answeredQuestions");
+        localStorage.setItem("colorsSectionStarted", "true");
+        localStorage.setItem("quizStarted", "true");
+      }
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fun Quiz || Colors Section</title>
+    <link rel="stylesheet" href="style.css" />
+    <style type="text/css">
+      * {
+        cursor: url(https://cur.cursors-4u.net/cursors/cur-2/cur116.cur), auto !important;
+      }
+    </style>
+    <a
+      href="https://www.cursors-4u.com/cursor/2008/12/17/cool-blue-outer-glow-pointer.html"
+      target="_blank"
+      title="Cool Blue Outer Glow Pointer"
+      ><img
+        src="https://cur.cursors-4u.net/cursor.png"
+        style="display: none"
+        border="0"
+        alt="Cool Blue Outer Glow Pointer"
+        style="position: absolute; top: 0px; right: 0px"
+    /></a>
+  </head>
+  <body>
+    <button id="logout-button" style="display: none">Logout</button>
+    <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
+    <a id="brain-link" href="brain_teasers.html" style="display: none"
+      >brain teasers</a
+    >
+    <button onclick="goBackAnIndex()">go back a question</button>
+    <button onclick="goForwardAnIndex()">go forward a question</button>
+    <script>
+      // Show the link only if logged in
+      if (
+        localStorage.getItem("playerName") &&
+        localStorage.getItem("playerEmail")
+      ) {
+        document.getElementById("brain-link").style.display = "inline";
+      }
+    </script>
+    <p id="user-info"></p>
+    <div class="body-container">
+<div id="start-form">
+  <input
+    type="text"
+    id="player-name"
+    placeholder="Your Full Name"
+    autocomplete="off"
+  /><br /> <br />
+  <div style="display: flex; align-items: center;">
+    <input
+      type="text"
+      id="player-email"
+      placeholder="Your CCHS Username"
+      autocomplete="off"
+      style="width: 200px;"
+    />
+    <span style="margin-left: 4px;">@centralcatholic.org</span>
+  </div>
+  <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+      <div id="quiz-container" style="display: none">
+        <marquee class="marqueeH1" direction="right">
+          <h1>FUN QUIZ COLORS SECTION !!!</h1>
+        </marquee>
+        <p>
+          Based off of MY GOAT ETHAN'S
+          <a
+            href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
+            target="_blank"
+          >
+            FUN QUIZ!! </a
+          ><br /><br />
+          please try to be EXACT with your answers so you possibly get it right.
+          no typos, no weird phrasing. thank you! also don't blame me for the
+          numbers being out of order... this is based off of Ethan's quiz, not
+          my information.
+        </p>
+
+        <div id="progress" style="margin-bottom: 10px; display: none"></div>
+        <br /><br />
+        <!-- Quiz UI starts here -->
+
+        <div class="quiz-ui">
+          <div id="question-area">
+            <div id="question">Loading...</div>
+            <img id="question-image" src="" />
+            <input
+              type="text"
+              id="answer"
+              placeholder="Type your answer..."
+              autocomplete="off"
+            />
+            <span id="suggestion-box"></span>
+            <ul id="suggestions"></ul>
+            <button onclick="submitAnswer()">Submit</button>
+            <button id="next-button">Next Question</button>
+            <button onclick="endQuiz()">End Quiz</button>
+          </div>
+          <div class="feedback-area">
+            <div id="feedback"></div>
+            <img id="feedback-image" src="" />
+            <div id="correct-answer" style="display: none"></div>
+          </div>
+        </div>
+      </div>
+      <div
+        id="transition-overlay"
+        style="
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.85);
+          z-index: 9999;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        <img
+          src="https://i.postimg.cc/Y24df0Gq/image.png"
+          alt="Transition"
+          style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
+        />
+        <br />
+        <button id="continue-btn" style="font-size: 2em; margin-top: 2em">
+          Continue
+        </button>
+      </div>
+      <div
+        id="end-transition-overlay"
+        style="
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.85);
+          z-index: 9999;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        <img
+          src="https://i.postimg.cc/RZPWQ0MR/image.png"
+          alt="End Transition"
+          style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
+        />
+        <br />
+        <button id="end-continue-btn" style="font-size: 2em; margin-top: 2em">
+          Continue
+        </button>
+      </div>
+      <div class="leaderboard-container">
+        <div class="leaderboard-content">
+          <h2>Leaderboard</h2>
+          <table id="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+      var questions = [
+        {
+          question: "#64. What color is this?",
+          answer: ["blue"],
+          image: "https://i.postimg.cc/d3rWvNrS/image.png",
+          feedbackImage: "https://i.postimg.cc/d3rWvNrS/image.png",
+        },
+        {
+          question: "#65. What color is this?",
+          answer: ["purple"],
+          image: "https://i.postimg.cc/G3KKPDzD/image.png",
+          feedbackImage: "https://i.postimg.cc/G3KKPDzD/image.png",
+        },
+        {
+          question: "#66. What color is this?",
+          answer: ["chartreuse"],
+          image: "https://i.postimg.cc/nzH7MdyP/image.png",
+          feedbackImage: "https://i.postimg.cc/nzH7MdyP/image.png",
+        },
+        {
+          question: "#67. What color is this?",
+          answer: [
+            "ultramarine",
+            "cobalt",
+            "sapphire",
+            "navy blue",
+            "anti-yellow",
+            "anti yellow",
+            "lapiz lazuli",
+            "lapiz",
+            "lapis",
+            "blueberry",
+          ],
+          image: "https://i.postimg.cc/d3rWvNrS/image.png",
+          feedbackImage: "https://i.postimg.cc/d3rWvNrS/image.png",
+        },
+        {
+          question: "#68. What color is this?",
+          answer: [
+            "amethyst",
+            "iris",
+            "orchid",
+            "lilac",
+            "Anti-Chartreuse",
+            "Anti Chartreuse",
+            "The source of an Evil Wizard's power so he can cast super spooky & evil spells on the local townspeople",
+            "Grape",
+          ],
+          image: "https://i.postimg.cc/G3KKPDzD/image.png",
+          feedbackImage: "https://i.postimg.cc/G3KKPDzD/image.png",
+        },
+        {
+          question: "#69. What color is this?",
+          answer: ["chartreuse"],
+          image: "https://i.postimg.cc/nzH7MdyP/image.png",
+          feedbackImage: "https://i.postimg.cc/nzH7MdyP/image.png",
+        },
+        {
+          question: "#70. What color is an orange?",
+          answer: ["tangerine"],
+          image: "https://i.postimg.cc/d1vX3Ytc/image.png",
+          feedbackImage: "https://i.postimg.cc/9QRsNbNK/image.png",
+        },
+        {
+          question: "#71. What color is this?",
+          answer: [
+            "scarlet",
+            "carmine",
+            "vermillion",
+            "anti-cyan",
+            "anti cyan",
+            "ruby",
+            "pomegranate",
+          ],
+          image: "https://i.postimg.cc/L6qyHXBZ/image.png",
+          feedbackImage: "https://i.postimg.cc/L6qyHXBZ/image.png",
+        },
+        {
+          question: "#72. What color is this?",
+          answer: [
+            "amber",
+            "flaxen",
+            "yellowish-chartreuse",
+            "yellowish chartreuse",
+            "urine",
+            "ochre",
+            "canary",
+          ],
+          image: "https://i.postimg.cc/W4789Jjx/image.png",
+          feedbackImage: "https://i.postimg.cc/W4789Jjx/image.png",
+        },
+        {
+          question: "#73. What's this?",
+          answer: ["lettuce"],
+          image: "https://i.postimg.cc/ZRR8V7wy/image.png",
+          feedbackImage: "https://i.postimg.cc/ZYXQvpqL/image.png",
+        },
+        {
+          question: "#74. What's this?",
+          answer: [
+            "marigold",
+            "tangerine",
+            "sandstone",
+            "marmalade",
+            "apricot",
+            "old bay seasoning",
+            "anti-light-blue",
+          ],
+          image: "https://i.postimg.cc/SKXqH69n/image.png",
+          feedbackImage: "https://i.postimg.cc/SKXqH69n/image.png",
+        },
+        {
+          question: "#75. What color is this?",
+          answer: ["Fuchsia"],
+          image: "https://i.postimg.cc/TPhSW9nC/image.png",
+          feedbackImage: "https://i.postimg.cc/TPhSW9nC/image.png",
+        },
+        {
+          question: "#76. What color is this?",
+          answer: ["blue"],
+          image: "https://i.postimg.cc/W4789Jjx/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#77. What color is this?",
+          answer: ["red"],
+          image: "https://i.postimg.cc/7LnXH0DV/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#78. What color is this?",
+          answer: ["orange"],
+          image: "https://i.postimg.cc/gc1h7s6Z/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#80. What color is this?",
+          answer: ["bluish chartreuse", "bluish-chartreuse", "green"],
+          image: "https://i.postimg.cc/VLDJ8FJg/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#81. What does this say? (phrase)\n(hint: color matters)",
+          answer: [
+            "red e for anything",
+            "ready for anything",
+            "red-e for anything",
+            "red e 4 anything",
+            "red-e 4 anything",
+          ],
+          image: "https://i.postimg.cc/3JspmXy7/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#82. What color is this?",
+          answer: ["chartreuse"],
+          image: "https://i.postimg.cc/G3KKPDzD/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#83. What color is this?",
+          answer: ["magenta"],
+          image: "https://i.postimg.cc/cHRJ57qQ/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#84. What color is this?",
+          answer: ["yellow"],
+          image: "https://i.postimg.cc/d3rWvNrS/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#85. What's this?",
+          answer: ["celery"],
+          image: "https://i.postimg.cc/0jd4qkKH/image.png",
+          feedbackImage: "https://i.postimg.cc/Yq47TVpN/image.png",
+        },
+      ];
+
+      function goToNextQuestion() {
+        hasSuggested = false;
+
+        if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+          document.addEventListener(
+            "keydown",
+            function () {
+              window.location.href = "geography_section.html";
+            },
+            { once: true }
+          );
+        } else {
+          // Save and load the next question
+          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+        }
+      }
+    </script>
+    <script src="custom.js"></script>
+    <script src="script.js"></script>
+    <script>
+      // Dark mode toggle
+      const darkModeBtn = document.getElementById("dark-mode-toggle");
+      darkModeBtn.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+        // Save preference to localStorage
+        localStorage.setItem(
+          "darkMode",
+          document.body.classList.contains("dark-mode")
+        );
+      });
+
+      // On page load, restore preference
+      if (localStorage.getItem("darkMode") === "true") {
+        document.body.classList.add("dark-mode");
+      }
+
+      function goBackAnIndex() {
+        // Check if the current question index is greater than 0
+        if (currentQuestionIndex > 0) {
+          currentQuestionIndex--;
+          localStorage.setItem(
+            "colorsSectionCurrentQuestionIndex",
+            currentQuestionIndex
+          );
+          loadQuestion();
+        } else {
+          alert("You are already at the first question.");
+        }
+      }
+      function goForwardAnIndex() {
+        // Check if the current question index is less than the last question
+        if (currentQuestionIndex < questions.length - 1) {
+          currentQuestionIndex++;
+          localStorage.setItem(
+            "colorsSectionCurrentQuestionIndex",
+            currentQuestionIndex
+          );
+          loadQuestion();
+        } else {
+          alert("You are already at the last question.");
+        }
+      }
+    </script>
+    <script>
+      // Replace your next button handler with this:
+      document.getElementById("next-button").onclick = function () {
+        // Always switch to dark mode for the next question
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("darkMode", "true");
+
+        // If on the last question, go to leaderboard
+        if (currentQuestionIndex >= questions.length - 1) {
+          window.location.href = "leaderboard.html";
+          return;
+        }
+
+        if (currentQuestionIndex === 2) {
+          document.getElementById("quiz-container").style.display = "none";
+          document.getElementById("transition-overlay").style.display = "flex";
+        } else if (currentQuestionIndex === 11) {
+          document.getElementById("quiz-container").style.display = "none";
+          document.getElementById("end-transition-overlay").style.display =
+            "flex";
+        } else {
+          currentQuestionIndex++;
+          localStorage.setItem(
+            "colorsSectionCurrentQuestionIndex",
+            currentQuestionIndex
+          );
+          // Only load next question if there are more questions
+          if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+          }
+          // If at the end, do nothing (no redirect, no alert)
+        }
+      };
+
+      function showFeedback(isCorrect, question) {
+        const feedback = document.getElementById("feedback");
+        const feedbackImage = document.getElementById("feedback-image");
+        const nextButton = document.getElementById("next-button");
+
+        if (isCorrect) {
+          feedback.textContent = "✅ Correct! You found Waldo!";
+          suggestionBox.style.display = "none";
+          let answeredQuestions = JSON.parse(
+            localStorage.getItem("answeredQuestions") || "[]"
+          );
+          if (answeredQuestions.includes(currentQuestionIndex)) {
+            feedback.textContent = "You've already answered this question!";
+            return;
+          }
+          if (!answeredQuestions.includes(currentQuestionIndex)) {
+            currentScore++;
+            updateUserInfo();
+            localStorage.setItem("currentScore", currentScore);
+            answeredQuestions.push(currentQuestionIndex);
+            localStorage.setItem(
+              "answeredQuestions",
+              JSON.stringify(answeredQuestions)
+            );
+            question.answeredCorrectly = true;
+          }
+          if (question.feedbackImage) {
+            feedbackImage.src = question.feedbackImage;
+            feedbackImage.style.display = "block";
+          }
+          nextButton.style.display = "inline-block";
+          hasSuggested = false;
+
+          // Only transition after question #74 (index 10)
+          if (
+            currentQuestionIndex > 11 &&
+            currentQuestionIndex <= 20 && // up to and including #84
+            document.body.classList.contains("dark-mode")
+          ) {
+            transitionToLightModeWithImage(
+              "https://i.postimg.cc/L6qyHXBZ/image.png"
+            );
+          }
+          return;
+        } else {
+          feedback.textContent = "Oops! That's not Waldo.";
+          feedbackImage.style.display = "none";
+        }
+
+        nextButton.style.display = "inline-block";
+      }
+
+      const colorsSection75Index = questions.findIndex(
+        (q) => q.question && q.question.includes("#75")
+      );
+
+      const transitionImages = {
+        [colorsSection75Index]: "", // #75
+        [colorsSection75Index + 1]: "https://i.postimg.cc/d3rWvNrS/image.png", // #77
+        [colorsSection75Index + 2]: "https://i.postimg.cc/L6qyHXBZ/image.png", // #78
+        [colorsSection75Index + 3]: "https://i.postimg.cc/SKXqH69n/image.png", // #79
+        [colorsSection75Index + 4]: "https://i.postimg.cc/cHRJ57qQ/image.png", // #80
+        [colorsSection75Index + 5]: "https://i.postimg.cc/59PD40X8/image.png", // #81
+        [colorsSection75Index + 6]: "https://i.postimg.cc/nzH7MdyP/image.png", // #82
+        [colorsSection75Index + 7]: "https://i.postimg.cc/VLDJ8FJg/image.png", // #83
+        [colorsSection75Index + 8]: "https://i.postimg.cc/W4789Jjx/image.png", // #84
+        // Add more if needed
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fun Quiz || Geography Section</title>
+    <link rel="stylesheet" href="style.css" />
+    <style type="text/css">
+      * {
+        cursor: url(https://cur.cursors-4u.net/cursors/cur-2/cur116.cur), auto !important;
+      }
+      body {
+        background: linear-gradient(135deg, #06fd00, #8fcd00, #e59237);
+      }
+    </style>
+    <a
+      href="https://www.cursors-4u.com/cursor/2008/12/17/cool-blue-outer-glow-pointer.html"
+      target="_blank"
+      title="Cool Blue Outer Glow Pointer"
+      ><img
+        src="https://cur.cursors-4u.net/cursor.png"
+        style="display: none"
+        border="0"
+        alt="Cool Blue Outer Glow Pointer"
+        style="position: absolute; top: 0px; right: 0px"
+    /></a>
+  </head>
+  <body>
+    <button id="logout-button" style="display: none">Logout</button>
+    <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
+    <a href="math_section.html" style="display: block">math section</a>
+    <a href="reading_section.html" style="display: block">reading section</a>
+    <a href="brain_teasers.html" style="display: block"
+      >brain teasers section</a
+    >
+    <a href="colors_section.html" style="display: block">colors section</a>
+    <button onclick="goBackAnIndex()">go back a question</button>
+    <button onclick="goForwardAnIndex()">go forward a question</button>
+
+    <script>
+      // Show the link only if logged in
+      if (
+        localStorage.getItem("playerName") &&
+        localStorage.getItem("playerEmail")
+      ) {
+        document.getElementById("brain-link").style.display = "inline";
+      }
+    </script>
+    <p id="user-info"></p>
+    <div class="body-container">
+<div id="start-form">
+  <input
+    type="text"
+    id="player-name"
+    placeholder="Your Full Name"
+    autocomplete="off"
+  /><br /> <br />
+  <div style="display: flex; align-items: center;">
+    <input
+      type="text"
+      id="player-email"
+      placeholder="Your CCHS Username"
+      autocomplete="off"
+      style="width: 200px;"
+    />
+    <span style="margin-left: 4px;">@centralcatholic.org</span>
+  </div>
+  <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+      <div id="quiz-container" style="display: none">
+        <marquee class="marqueeH1" direction="right">
+          <h1>FUN QUIZ GEOGRAPHY SECTION !!!</h1>
+        </marquee>
+        <p>
+          Based off of MY GOAT ETHAN'S
+          <a
+            href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
+            target="_blank"
+          >
+            FUN QUIZ!! </a
+          ><br /><br />
+          please try to be EXACT with your answers so you possibly get it right.
+          no typos, no weird phrasing. thank you! also don't blame me for the
+          numbers being out of order... this is based off of Ethan's quiz, not
+          my information.
+        </p>
+
+        <div id="progress" style="margin-bottom: 10px; display: none"></div>
+        <br /><br />
+        <!-- Quiz UI starts here -->
+
+        <div class="quiz-ui">
+          <div id="question-area">
+            <div id="question">Loading...</div>
+            <img id="question-image" src="" />
+            <input
+              type="text"
+              id="answer"
+              placeholder="Type your answer..."
+              autocomplete="off"
+            />
+            <span id="suggestion-box"></span>
+            <ul id="suggestions"></ul>
+            <button onclick="submitAnswer()">Submit</button>
+            <button id="next-button" onclick="goToNextQuestion()">
+              Next Question
+            </button>
+          </div>
+          <div class="feedback-area">
+            <div id="feedback"></div>
+            <img id="feedback-image" src="" />
+            <div id="correct-answer" style="display: none"></div>
+          </div>
+        </div>
+      </div>
+      <div class="leaderboard-container">
+        <div class="leaderboard-content">
+          <h2>Leaderboard</h2>
+          <table id="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+      var questions = [
+        {
+          question: "#86. What country is this?",
+          answer: ["usa", "united states", "united states of america"],
+          image: "https://i.postimg.cc/y6ZFWJb9/image.png",
+          feedbackImage: "https://i.postimg.cc/fT7mjGZR/image.png",
+        },
+        {
+          question: "#87. What state is this?",
+          answer: ["colorado"],
+          image: "https://i.postimg.cc/G38Z2QRQ/image.png",
+          feedbackImage: "https://i.postimg.cc/pTgc8wvB/image.png",
+        },
+        {
+          question: "#88. What's this?",
+          answer: ["tomato", "tomatoes"],
+          image: "https://i.postimg.cc/VkD74r1v/image.png",
+          feedbackImage: "https://i.postimg.cc/TPBJHnsd/image.png",
+        },
+        {
+          question: "#89. What's this?",
+          answer: ["lettuce"],
+          image: "https://i.postimg.cc/vZg12Cwn/image.png",
+          feedbackImage: "https://i.postimg.cc/T112LWRb/image.png",
+        },
+        {
+          question: "#90. What country's flag is this?",
+          answer: ["bangladesh"],
+          image: "https://i.postimg.cc/63g6ZpT1/image.png",
+          feedbackImage: "https://i.postimg.cc/QNKd31yL/image.png",
+        },
+        {
+          question: "#91. What country is this?",
+          answer: ["malta"],
+          image: "https://i.postimg.cc/xCKpvsdD/image.png",
+          feedbackImage: "https://i.postimg.cc/kXMYSv3z/image.png",
+        },
+        {
+          question: "#92. What country's flag is this?",
+          answer: ["canada"],
+          image: "https://i.postimg.cc/0QdZMbt9/image.png",
+          feedbackImage: "https://i.postimg.cc/Dyz50f1K/image.png",
+        },
+        {
+          question: "#93. What country is this?",
+          answer: [
+            "stupid britain",
+            "stupid uk",
+            "stupid united kingdom",
+            "pile of garbage located in the atlantic ocean",
+          ],
+          image: "https://i.postimg.cc/L6qfGJzh/image.png",
+          feedbackImage: "https://i.postimg.cc/j5dnc2xx/image.png",
+        },
+        {
+          question: "#94. What's this?",
+          answer: ["lettuce"],
+          image: "https://i.postimg.cc/L81W46M8/image.png",
+          feedbackImage: "https://i.postimg.cc/rm8Z91RD/image.png",
+        },
+        {
+          question: "#95. What country WAS #94?",
+          answer: ["jamaica"],
+          image: "https://i.postimg.cc/fyVKHBzR/image.png",
+          feedbackImage: "https://i.postimg.cc/pdPBN2W7/image.png",
+        },
+        {
+          question: "#96. What country is this?",
+          answer: ["chile"],
+          image: "https://i.postimg.cc/Y2TV5mJs/image.png",
+          feedbackImage: "https://i.postimg.cc/ZqYD8PdC/image.png",
+        },
+        {
+          question: "#97. What country is this?",
+          answer: ["stupid france"],
+          image: "https://i.postimg.cc/3JMSSQGM/image.png",
+          feedbackImage: "https://i.postimg.cc/CLHNcBYD/image.png",
+        },
+        {
+          question: "#98. What's this?",
+          answer: ["apple"],
+          image: "https://i.postimg.cc/R0nJbyf8/image.png",
+          feedbackImage: "https://i.postimg.cc/KvvkyRBt/image.png",
+        },
+        {
+          question: "#99. What state is this?",
+          answer: ["stupid michigan"],
+          image: "https://i.postimg.cc/1tqTXmFH/image.png",
+          feedbackImage: "https://i.postimg.cc/qRVwm8ts/image.png",
+        },
+        {
+          question: "#100. What country's flag is this?",
+          answer: ["usa", "united states", "united states of america"],
+          image: "https://i.postimg.cc/0QdZMbt9/image.png",
+          feedbackImage: "https://i.postimg.cc/Jz7zkgPJ/image.png",
+        },
+        {
+          question: "#101. What country flag is this?",
+          answer: ["russia"],
+          image: "https://i.postimg.cc/hjcyDLSS/image.png",
+          feedbackImage: "https://i.postimg.cc/50s3fD73/image.png",
+        },
+        {
+          question: "#102. What country flag is this?",
+          answer: ["chad"],
+          image: "https://i.postimg.cc/Wpkf3cGS/image.png",
+          feedbackImage: "https://i.postimg.cc/cH8Trfn6/image.png",
+        },
+        {
+          question: "#103. What country's flag is this?",
+          answer: ["spain"],
+          image: "https://i.postimg.cc/vm4tN5XX/image.png",
+          feedbackImage: "https://i.postimg.cc/yxymZjY6/image.png",
+        },
+        {
+          question: "#104. What's this?",
+          answer: ["chartreuse"],
+          image: "https://i.postimg.cc/VN0XRmLV/image.png",
+          feedbackImage: "https://i.postimg.cc/fWCSYJfb/image.png",
+        },
+        {
+          question: "#105. What landmass is this?",
+          answer: ["louisiana"],
+          image: "https://i.postimg.cc/fbYJyLbD/image.png",
+          feedbackImage: "https://i.postimg.cc/Kj8z0DD8/image.png",
+        },
+        {
+          question: "#106. What flag is this?",
+          answer: ["ohio"],
+          image: "https://i.postimg.cc/52hDp9SH/image.png",
+          feedbackImage: "https://i.postimg.cc/gjhgx81N/image.png",
+        },
+        {
+          question: "#107. What's this?",
+          answer: ["lettuce"],
+          image: "https://i.postimg.cc/GhkMrPFp/image.png",
+          feedbackImage: "https://i.postimg.cc/pLmpzCsW/image.png",
+        },
+      ];
+
+      function goToNextQuestion() {
+        hasSuggested = false;
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+        } else {
+          // Save and load the next question
+          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+        }
+      }
+    </script>
+    <script src="custom.js"></script>
+    <script src="script.js"></script>
+    <script>
+      function goBackAnIndex() {
+        // Check if the current question index is greater than 0
+        if (currentQuestionIndex > 0) {
+          currentQuestionIndex--;
+          localStorage.setItem(
+            "colorsSectionCurrentQuestionIndex",
+            currentQuestionIndex
+          );
+          loadQuestion();
+        } else {
+          alert("You are already at the first question.");
+        }
+      }
+      function goForwardAnIndex() {
+        // Check if the current question index is less than the last question
+        if (currentQuestionIndex < questions.length - 1) {
+          currentQuestionIndex++;
+          localStorage.setItem(
+            "colorsSectionCurrentQuestionIndex",
+            currentQuestionIndex
+          );
+          loadQuestion();
+        } else {
+          alert("You are already at the last question.");
+        }
+      }
+    </script>
+    <script>
+      // Dark mode toggle
+      const darkModeBtn = document.getElementById("dark-mode-toggle");
+      darkModeBtn.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+        // Save preference to localStorage
+        localStorage.setItem(
+          "darkMode",
+          document.body.classList.contains("dark-mode")
+        );
+      });
+
+      // On page load, restore preference
+      if (localStorage.getItem("darkMode") === "true") {
+        document.body.classList.add("dark-mode");
+      }
+    </script>
+  </body>
+</html>

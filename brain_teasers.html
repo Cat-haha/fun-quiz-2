@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script>
+      // Redirect to login if not logged in
+      if (
+        !localStorage.getItem("playerName") ||
+        !localStorage.getItem("playerEmail")
+      ) {
+        window.location.href = "index.html";
+      }
+      // Only reset if coming from previous section (not on refresh)
+      if (
+        !localStorage.getItem("brainTeasersSectionStarted") ||
+        document.referrer.includes("reading_section.html")
+      ) {
+        localStorage.setItem("currentQuestionIndex", "0");
+        localStorage.removeItem("answeredQuestions");
+        localStorage.setItem("brainTeasersSectionStarted", "true");
+        localStorage.setItem("quizStarted", "true");
+      }
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fun Quiz || Brain Teasers Section</title>
+    <link rel="stylesheet" href="style.css" />
+    <style type="text/css">
+      * {
+        cursor: url(https://cur.cursors-4u.net/cursors/cur-2/cur116.cur), auto !important;
+      }
+      body {
+        background: linear-gradient(135deg, #fffe02, #ff827c, #ff02fe);
+      }
+    </style>
+    <a
+      href="https://www.cursors-4u.com/cursor/2008/12/17/cool-blue-outer-glow-pointer.html"
+      target="_blank"
+      title="Cool Blue Outer Glow Pointer"
+      ><img
+        src="https://cur.cursors-4u.net/cursor.png"
+        border="0"
+        alt="Cool Blue Outer Glow Pointer"
+        style="position: absolute; top: 0px; right: 0px"
+    /></a>
+  </head>
+  <body>
+    <button id="logout-button" style="display: none">Logout</button>
+    <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
+    <p id="user-info"></p>
+    <div class="body-container">
+<div id="start-form">
+  <input
+    type="text"
+    id="player-name"
+    placeholder="Your Full Name"
+    autocomplete="off"
+  /><br /> <br />
+  <div style="display: flex; align-items: center;">
+    <input
+      type="text"
+      id="player-email"
+      placeholder="Your CCHS Username"
+      autocomplete="off"
+      style="width: 200px;"
+    />
+    <span style="margin-left: 4px;">@centralcatholic.org</span>
+  </div>
+  <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+      <div id="quiz-container" style="display: none">
+        <marquee class="marqueeH1" direction="right">
+          <h1>FUN QUIZ BRAIN TEASERS SECTION !!!</h1>
+        </marquee>
+        <p>
+          Based off of MY GOAT ETHAN'S
+          <a
+            href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
+            target="_blank"
+          >
+            FUN QUIZ!! </a
+          ><br /><br />
+          please try to be EXACT with your answers so you possibly get it right.
+          no typos, no weird phrasing. thank you! also don't blame me for the
+          numbers being out of order... this is based off of Ethan's quiz, not
+          my information.
+        </p>
+
+        <div id="progress" style="margin-bottom: 10px; display: none"></div>
+        <br /><br />
+        <!-- Quiz UI starts here -->
+
+        <div class="quiz-ui">
+          <div id="question-area">
+            <div id="question">Loading...</div>
+            <img id="question-image" src="" />
+            <input
+              type="text"
+              id="answer"
+              placeholder="Type your answer..."
+              autocomplete="off"
+            />
+            <span id="suggestion-box"></span>
+            <ul id="suggestions"></ul>
+            <button onclick="submitAnswer()">Submit</button>
+            <button id="next-button" onclick="goToNextQuestion()">
+              Next Question
+            </button>
+          </div>
+          <div class="feedback-area">
+            <div id="feedback"></div>
+            <img id="feedback-image" src="" />
+            <div id="correct-answer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="leaderboard-container">
+        <div class="leaderboard-content">
+          <h2>Leaderboard</h2>
+          <table id="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+      const questions = [
+        {
+          question: "#50. What's this? (phrase)",
+          answer: "top secret",
+          image: "https://i.postimg.cc/TwJx3Cj1/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#51: What's This?",
+          answer: "lettuce",
+          image: "https://i.postimg.cc/x8sSK84S/image.png",
+          feedbackImage: "https://i.postimg.cc/KcQFXpvs/image.png",
+        },
+        {
+          question: "#52: What's This? (phrase)",
+          answer: "running out of time",
+          image: "https://i.postimg.cc/JzKrWbCM/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#53. What's this? (phrase)",
+          answer: ["forget it", "4get it"],
+          image: "https://i.postimg.cc/qRr95Jpt/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#54. What's this? (object)",
+          answer: ["sandbox", "sand box"],
+          image: "https://i.postimg.cc/7Z3vMJkv/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#55. What's this?",
+          answer: ["orange", "an orange"],
+          image: "https://i.postimg.cc/DZYRyqqG/image.png",
+          feedbackImage: "https://i.postimg.cc/D09D1npy/image.png",
+        },
+        {
+          question: "#56. What's this? (object)",
+          answer: ["Pot8os", "potatoes", "potato"],
+          image: "https://i.postimg.cc/TPkTg5Vd/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#57. What's this? (phrase)",
+          answer: ["good after noon", "good afternoon"],
+          image: "https://i.postimg.cc/3wP9Nnk2/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#58. What's this? (object)",
+          answer: ["pi-rate ship", "pi rate ship", "pirate ship"],
+          image: "https://i.postimg.cc/KYgr6B0j/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#59. What's This? (phrase)",
+          answer: "all in a days work",
+          image: "https://i.postimg.cc/vmJK6Q4q/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#60. What's This?",
+          answer: "lettuce",
+          image: "https://i.postimg.cc/x8sSK84S/image.png",
+          feedbackImage: "https://i.postimg.cc/KcQFXpvs/image.png",
+        },
+        {
+          question: "#61. What's This? (phrase)",
+          answer: ["U R full of below knee", "you are full of bologna"],
+          image: "https://i.postimg.cc/L5R0NNBj/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "#62. What's this? (object)",
+          answer: ["ten issues", "tennis shoes"],
+          image: "https://i.postimg.cc/43V5qp3P/image.png",
+          feedbackImage: "",
+        },
+        {
+          question: "BONUS: 63. What's this?",
+          answer: ["sai", "Ψ", "psi"],
+          image: "https://i.postimg.cc/13cXdtQ6/image.png",
+          feedbackImage: "",
+        },
+      ];
+
+      function exitExplaination() {
+        document.getElementById("explanation-container").style.display = "none";
+        loadQuestion();
+      }
+
+      function goToNextQuestion() {
+        hasSuggested = false;
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+          document.addEventListener(
+            "keydown",
+            function () {
+              window.location.href = "colors_section.html";
+            },
+            { once: true }
+          );
+        } else {
+          // Save and load the next question
+          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+        }
+      }
+    </script>
+    <script src="custom.js"></script>
+    <script src="script.js"></script>
+    <script>
+      // Dark mode toggle
+      const darkModeBtn = document.getElementById("dark-mode-toggle");
+      darkModeBtn.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+        // Save preference to localStorage
+        localStorage.setItem(
+          "darkMode",
+          document.body.classList.contains("dark-mode")
+        );
+      });
+
+      // On page load, restore preference
+      if (localStorage.getItem("darkMode") === "true") {
+        document.body.classList.add("dark-mode");
+      }
+    </script>
+  </body>
+</html>

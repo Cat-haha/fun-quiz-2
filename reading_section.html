@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fun Quiz || Reading Section</title>
+    <link rel="stylesheet" href="style.css" />
+    <style type="text/css">
+      * {
+        cursor: url(https://cur.cursors-4u.net/cursors/cur-2/cur116.cur), auto !important;
+      }
+      body {
+        background: linear-gradient(135deg, #00FEFF, #0084FF, #0002FF)
+      }
+    </style>
+    <a
+      href="https://www.cursors-4u.com/cursor/2008/12/17/cool-blue-outer-glow-pointer.html"
+      target="_blank"
+      title="Cool Blue Outer Glow Pointer"
+      ><img
+        src="https://cur.cursors-4u.net/cursor.png"
+        style="display: none"
+        border="0"
+        alt="Cool Blue Outer Glow Pointer"
+        style="position: absolute; top: 0px; right: 0px"
+    /></a>
+    <script>
+      // Redirect to login if not logged in
+      if (
+        !localStorage.getItem("playerName") ||
+        !localStorage.getItem("playerEmail")
+      ) {
+        window.location.href = "index.html";
+      }
+      // Only reset if coming from previous section (not on refresh)
+      if (
+        !localStorage.getItem("readingSectionStarted") ||
+        document.referrer.includes("math_section.html")
+      ) {
+        localStorage.setItem("currentQuestionIndex", "0");
+        localStorage.removeItem("answeredQuestions");
+        localStorage.setItem("readingSectionStarted", "true");
+        localStorage.setItem("quizStarted", "true");
+      }
+    </script>
+  </head>
+  <body>
+    <button id="logout-button" style="display: none">Logout</button>
+    <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
+    <a id="brain-link" href="brain_teasers.html" style="display: none"
+      >brain teasers</a
+    >
+    <script>
+      // Show the link only if logged in
+      if (
+        localStorage.getItem("playerName") &&
+        localStorage.getItem("playerEmail")
+      ) {
+        document.getElementById("brain-link").style.display = "inline";
+      }
+    </script>
+    <p id="user-info"></p>
+    <div class="body-container">
+<div id="start-form">
+  <input
+    type="text"
+    id="player-name"
+    placeholder="Your Full Name"
+    autocomplete="off"
+  /><br /> <br />
+  <div style="display: flex; align-items: center;">
+    <input
+      type="text"
+      id="player-email"
+      placeholder="Your CCHS Username"
+      autocomplete="off"
+      style="width: 200px;"
+    />
+    <span style="margin-left: 4px;">@centralcatholic.org</span>
+  </div>
+  <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+      <div id="quiz-container" style="display: none">
+        <marquee class="marqueeH1" direction="right">
+          <h1>FUN QUIZ READING SECTION !!!</h1>
+        </marquee>
+        <p>
+          Based off of MY GOAT ETHAN'S
+          <a
+            href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
+            target="_blank"
+          >
+            FUN QUIZ!! </a
+          ><br /><br />
+          please try to be EXACT with your answers so you possibly get it right.
+          no typos, no weird phrasing. thank you! also don't blame me for the
+          numbers being out of order... this is based off of Ethan's quiz, not
+          my information.
+        </p>
+
+        <div id="progress" style="margin-bottom: 10px; display: none"></div>
+        <br /><br />
+        <!-- Quiz UI starts here -->
+
+        <div class="quiz-ui">
+          <div id="question-area">
+            <div id="question">Loading...</div>
+            <img id="question-image" src="" />
+            <input
+              type="text"
+              id="answer"
+              placeholder="Type your answer..."
+              autocomplete="off"
+            />
+            <span id="suggestion-box"></span>
+            <ul id="suggestions"></ul>
+            <button onclick="submitAnswer()">Submit</button>
+            <button id="next-button" onclick="goToNextQuestion()">
+              Next Question
+            </button>
+          </div>
+          <div class="feedback-area">
+            <div id="feedback"></div>
+            <img id="feedback-image" src="" />
+            <div id="correct-answer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="leaderboard-container">
+        <div class="leaderboard-content">
+          <h2>Leaderboard</h2>
+          <table id="leaderboard-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <script>
+      var questions = [
+        {
+          question:
+            "Read the passage below. This passage will be used for questions #35-39. #35. How many meters does a person have to run? (PER LAP)",
+          answer: ["20", "20 meters"],
+          image: "https://i.postimg.cc/j5fBxfGG/image.png",
+          feedbackImage: "https://i.postimg.cc/pLd794wQ/unnamed-3.gif",
+        },
+        {
+          question:
+            "#36. What is the maximum amount of laps that the FitnessGram Pacer Test allows a person to run?",
+          answer: ["247", "247 laps"],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/XJvXtVmG/unnamed-4.gif",
+        },
+        {
+          question: "#37. What's this?",
+          answer: ["fish", "a fish", "the fish"],
+          image: "https://i.postimg.cc/JhH0z4g3/image.png",
+          feedbackImage: "https://i.postimg.cc/N0XGwC9p/image.png",
+        },
+        {
+          question: "#38. What is the median of this set of numbers?",
+          answer: ["7", "seven"],
+          image: "https://i.postimg.cc/cJfWzK2z/image.png",
+          feedbackImage: "https://i.postimg.cc/hvZRmVQX/unnamed-1.gif",
+        },
+        {
+          question:
+            "#39. How many times does the letter “e” appear in the given passage? (the one given for questions 34-38)",
+          answer: ["58", "fifty-eight", "fifty eight"],
+          image: "https://i.postimg.cc/44W1cWy8/image.png",
+          feedbackImage: "https://i.postimg.cc/rynBQCzm/unnamed-2.gif",
+        },
+        {
+          question: "#40. What is the largest prime number between 1 and 1000?",
+          answer: ["997"],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/J05v3ZyN/unnamed-3.gif",
+        },
+        {
+          question: "#41. What's this?",
+          answer: ["lettuce"],
+          image: "https://i.postimg.cc/bY9BB0Jb/image.png",
+          feedbackImage: "https://i.postimg.cc/wTxG8tyr/image.png",
+        },
+        {
+          question:
+            "#42. How many line breaks were on the question slide that asked how many times the letter “E” appeared in the passage?",
+          answer: ["3", "3 lines", "3 line breaks"],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/6qPRm1Gt/unnamed-4.gif",
+        },
+        {
+          question: "#43. What's this?",
+          answer: [
+            "the concept of the color green",
+            "green",
+            "concept of the color green",
+            "concept of green",
+            "the concept of green",
+          ],
+          image: "https://i.postimg.cc/9F4y7VvM/image.png",
+          feedbackImage:
+            "https://i.postimg.cc/3xmpt1rQ/image-2025-05-09-235555888.png",
+        },
+        {
+          question:
+            "#44. Little John and his 2 siblings are building houses. The first sibling builds his house out of hay, and the second sibling builds his house out of wood. What does John build his house out of? (hint: this answer is brain rotted)",
+          answer: [
+            "galvanized square steel",
+            "Eco-friendly wood veneers",
+            "Screws borrowed from aunt",
+            "screws",
+            "veneers",
+            "steel",
+          ],
+          image: "",
+          feedbackImage: "",
+        },
+        {
+          question:
+            "#45. First proposed in 1962 by Martin K. Speckter, this unconventional punctuation mark combined the functions of the exclamation mark and the question mark. What is it called?",
+          answer: ["interrobang", "‽", "the interrobang"],
+          image: "",
+          feedbackImage: "",
+        },
+        {
+          question:
+            "#46. Steve has 49 Chocolate bars. He gains 41 more from his aunt. ⅕ of the total chocolate bars are 2-packs. Counting the 2-packs as 2 separate chocolate bars, how many chocolate bars does Dave have?",
+          answer: [
+            "not enough info",
+            "Dave",
+            "idk",
+            "i don't know",
+            "we don't know",
+          ],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/zv4WHbyY/image.png",
+        },
+        {
+          question: "#47. What's this?",
+          answer: ["beans"],
+          image: "https://i.postimg.cc/Fz1mkzRs/image.png",
+          feedbackImage: "https://i.postimg.cc/3rb35XSy/image.png",
+        },
+        {
+          question:
+            "#48. How many different mainline shrek movies is a person able to watch? (AS OF 5/6/25)",
+          answer: ["4", "four"],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/NFcRGDxX/unnamed-5.gif",
+        },
+        {
+          question:
+            "#49. What is the ONE question (excluding extra credit) to not be numbered?",
+          answer: [
+            "23",
+            "#23",
+            "number 23",
+            "number twenty-three",
+            "number twenty three",
+            "twenty-three",
+            "twenty three",
+          ],
+          image: "",
+          feedbackImage: "https://i.postimg.cc/L6vjRzgq/image.png",
+        },
+      ];
+
+      function goToNextQuestion() {
+        hasSuggested = false;
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+
+          // After the quiz ends, wait for a key press to go to next section
+          alert(
+            "You finished the Reading Section! Now taking you to the Brain Teasers Section. Press any key to continue."
+          );
+          document.addEventListener(
+            "keydown",
+            function () {
+              window.location.href = "brain_teasers.html";
+            },
+            { once: true }
+          );
+        } else {
+          // Save and load the next question
+          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+        }
+      }
+    </script>
+    <script src="custom.js"></script>
+    <script src="script.js"></script>
+    <script>
+      // Dark mode toggle
+      const darkModeBtn = document.getElementById("dark-mode-toggle");
+      darkModeBtn.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+        // Save preference to localStorage
+        localStorage.setItem(
+          "darkMode",
+          document.body.classList.contains("dark-mode")
+        );
+      });
+
+      // On page load, restore preference
+      if (localStorage.getItem("darkMode") === "true") {
+        document.body.classList.add("dark-mode");
+      }
+    </script>
+    <script>
+      function submitAnswer() {
+        const answerInput = document.getElementById("answer");
+        const userAnswer = answerInput.value.trim().toLowerCase();
+        const question = questions[currentQuestionIndex];
+        const feedback = document.getElementById("feedback");
+        const feedbackImage = document.getElementById("feedback-image");
+        const nextButton = document.getElementById("next-button");
+        const correctAnswerDiv = document.getElementById("correct-answer");
+
+        feedback.innerHTML = "";
+        feedbackImage.style.display = "none";
+        correctAnswerDiv.style.display = "none";
+
+        // Example: If your "Little John" question is at index 13 (adjust as needed)
+        if (
+          question.question &&
+          question.question.includes(
+            "Little John and his 2 siblings are building houses"
+          )
+        ) {
+          if (
+            (userAnswer === "wood" ||
+              userAnswer === "straw" ||
+              userAnswer === "sticks" ||
+              userAnswer === "stick" ||
+              userAnswer === "hay") &&
+            !localStorage.getItem("brainTeasers44Warned")
+          ) {
+            feedback.textContent = `if ${userAnswer} was used in the question, why would it be the answer again?`;
+            localStorage.setItem("brainTeasers44Warned", "true");
+            return;
+          }
+          if (localStorage.getItem("brainTeasers44Warned")) {
+            localStorage.removeItem("brainTeasers44Warned");
+          }
+        }
+
+        const acceptedAnswers = Array.isArray(question.answer)
+          ? question.answer.map((a) => a.trim().toLowerCase())
+          : [question.answer.trim().toLowerCase()];
+
+        const isCorrect = acceptedAnswers.includes(userAnswer.toLowerCase());
+
+        // === Log answer only once ===
+        if (!question.loggedAnswer) {
+          userAnswers.push({
+            questionIndex: currentQuestionIndex,
+            questionText: question.question,
+            userAnswer: userAnswer,
+            acceptedAnswers,
+            isCorrect,
+            questionType: "text",
+          });
+          question.loggedAnswer = true;
+
+          // 💾 Save to localStorage
+          localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+        }
+
+        // === Show feedback ===
+        if (isCorrect) {
+          feedback.textContent = "✅ Correct!";
+          suggestionBox.style.display = "none";
+
+          // Prevent infinite score abuse
+          let answeredQuestions = JSON.parse(
+            localStorage.getItem("answeredQuestions") || "[]"
+          );
+          if (!answeredQuestions.includes(currentQuestionIndex)) {
+            currentScore++;
+            updateUserInfo();
+            localStorage.setItem("currentScore", currentScore);
+            answeredQuestions.push(currentQuestionIndex);
+            localStorage.setItem(
+              "answeredQuestions",
+              JSON.stringify(answeredQuestions)
+            );
+            question.answeredCorrectly = true;
+          }
+
+          if (question.feedbackImage) {
+            feedbackImage.src = question.feedbackImage;
+            feedbackImage.style.display = "block";
+          }
+
+          // Always show correct answer(s)
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
+            ", "
+          )}`;
+          correctAnswerDiv.style.display = "block";
+
+          nextButton.style.display = "inline-block";
+          hasSuggested = false;
+        } else {
+          attemptCount++;
+          if (attemptCount >= 2) {
+            feedback.textContent = "❌ Incorrect.";
+            suggestionBox.style.display = "none";
+
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
+              ", "
+            )}`;
+            correctAnswerDiv.style.display = "block";
+            nextButton.style.display = "inline-block";
+
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+          } else {
+            feedback.textContent = "❌ Incorrect. Try again!";
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
