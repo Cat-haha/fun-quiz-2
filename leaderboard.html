@@ -38,6 +38,7 @@
     <button onclick="loadLeaderboard()">Refresh Leaderboard</button>
     <br />
     <button id="restart-button" onclick="restartQuiz()">Restart Quiz</button>
+    <button id="end-quiz-btn" style="display: block" onclick="endQuiz()">End Quiz</button>
     <script>
       // Show user info from localStorage immediately for seamless experience
       document.addEventListener("DOMContentLoaded", function () {
@@ -159,6 +160,51 @@
           }
         };
       }
+
+      // --- Leaderboard logic ---
+      function loadLeaderboard() {
+        const leaderboardTable = document.getElementById("leaderboard-table").getElementsByTagName('tbody')[0];
+        leaderboardTable.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
+        // Use Firestore to fetch leaderboard data
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+          firebase.firestore().collection("leaderboard")
+            .orderBy("score", "desc")
+            .limit(50)
+            .get()
+            .then((querySnapshot) => {
+              leaderboardTable.innerHTML = "";
+              if (querySnapshot.empty) {
+                leaderboardTable.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
+              } else {
+                querySnapshot.forEach((doc) => {
+                  const data = doc.data();
+                  const row = leaderboardTable.insertRow();
+                  row.insertCell(0).textContent = data.name || "Anonymous";
+                  row.insertCell(1).textContent = data.score || 0;
+                });
+              }
+            })
+            .catch((error) => {
+              leaderboardTable.innerHTML = `<tr><td colspan='2'>Error: ${error.message}</td></tr>`;
+            });
+        } else {
+          leaderboardTable.innerHTML = "<tr><td colspan='2'>Firestore not available.</td></tr>";
+        }
+      }
+
+      function restartQuiz() {
+        localStorage.clear();
+        window.location.href = "index.html";
+      }
+
+      function endQuiz() {
+        // Optionally, you can clear state or redirect
+        window.location.href = "index.html";
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        loadLeaderboard();
+      });
     </script>
     <script src="script.js"></script>
   </body>
