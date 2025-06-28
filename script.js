@@ -10,9 +10,9 @@ if (typeof firebase !== 'undefined' && firebase && firebase.apps && firebase.app
     measurementId: "G-RG453ZV61K"
   });
 }
-// Only declare db if not already declared
-if (typeof db === 'undefined') {
-  var db = firebase.firestore();
+// Globally initialize Firestore and attach to window.db if not already present
+if (typeof window.db === 'undefined') {
+  window.db = firebase.firestore();
 }
 
 // === Variables First ===
