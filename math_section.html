@@ -160,7 +160,8 @@
       new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
     </script>
     <script>
-      const questions = [
+      // Make questions global so script.js can access them
+      window.questions = [
         {
           question: "#20. What's the measure of the angle?",
           answer: ["91", "91 degrees", "91°"],
