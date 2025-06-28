@@ -46,7 +46,7 @@
   <body>
     <button id="logout-button" style="display: none">Logout</button>
     <button id="end-quiz-btn" style="display: block" onclick="endQuiz()">End Quiz</button>
-    <h1>SIGN IN WITH GOOGLE TO START<br />AND PRESS END QUIZ WHEN YOU END</h1>
+    <h1>SIGN IN WITH GOOGLE TO START<br />AND PRESS END QUIZ WHEN YOU END <br />IF THE IMAGE DOESN'T CHANGE, WAIT FOR A BIT. IT LAGS (SORRY!)</h1>
     <a
       href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
       target="_blank"
@@ -344,7 +344,7 @@
 
           // After the quiz ends, wait for a key press to go to next section
           alert(
-            "You finished the Warmup Section! Now taking you to the Math Section. Press any key to continue."
+            "You finished the Warmup Section! Now taking you to the Math Section. Press OK to continue."
           );
           document.addEventListener(
             "keydown",
@@ -372,16 +372,12 @@
       if (answerInput) {
         answerInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") {
-            if (nextButton && nextButton.style.display !== "none") {
+            // Only submit answer if feedback is NOT showing (i.e., Next button is hidden)
+            if (nextButton && nextButton.style.display === "block") {
               goToNextQuestion();
-            } else {
-              submitAnswer();
             }
           }
         });
-      }
-      if (nextButton) {
-        nextButton.addEventListener("click", goToNextQuestion);
       }
       // Add logout button functionality
       const logoutBtn = document.getElementById("logout-button");
