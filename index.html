@@ -45,12 +45,12 @@
   </head>
   <body>
     <button id="logout-button" style="display: none">Logout</button>
-    <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
-    <a href="math_section.html" style="display: block">math section</a>
-    <a href="reading_section.html" style="display: block">reading section</a>
-    <a href="brain_teasers.html" style="display: block">brain teasers section</a>
-    <a href="colors_section.html" style="display: block">colors section</a>
-    <a href="geography_section.html" style="display: block">geoegraphy section</a>
+    <h1>SIGN IN WITH GOOGLE TO START<br />AND PRESS END QUIZ WHEN YOU END</h1>
+    <a
+      href="https://docs.google.com/presentation/d/1GQsgHi6w7xKAHZJtvmCtOwM8i7Q6u8Nnatovm_fjo9o/edit?usp=sharing"
+      target="_blank"
+      >Fun Quiz Google Slide</a
+    >
     <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
     <p id="user-info"></p>
     <div class="body-container">
@@ -577,6 +577,27 @@
         } else {
           alert("You are already at the last question.");
         }
+      }
+    </script>
+    <!-- Add End Quiz button -->
+    <button id="end-quiz-button">End Quiz</button>
+    <script>
+      // End Quiz button logic
+      const endQuizBtn = document.getElementById("end-quiz-button");
+      if (endQuizBtn) {
+        endQuizBtn.onclick = function () {
+          if (confirm("Are you sure you want to end the quiz? You will be logged out and returned to the start.")) {
+            if (typeof firebase !== 'undefined' && firebase.auth) {
+              firebase.auth().signOut().then(function () {
+                localStorage.clear();
+                window.location.href = "index.html";
+              });
+            } else {
+              localStorage.clear();
+              window.location.href = "index.html";
+            }
+          }
+        };
       }
     </script>
   </body>
