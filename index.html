@@ -4,6 +4,21 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+    <script>
+      // Initialize Firebase (must be before any usage)
+      const firebaseConfig = {
+        apiKey: "AIzaSyCDlykaXg7KdQPv3jeCOrnRV1Z_6P1n5S0",
+        authDomain: "funquiz-f5177.firebaseapp.com",
+        projectId: "funquiz-f5177",
+        storageBucket: "funquiz-f5177.appspot.com",
+        messagingSenderId: "243832133348",
+        appId: "1:243832133348:web:03d6746d63388112417ef1",
+        measurementId: "G-RG453ZV61K"
+      };
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Fun Quiz || Warmup Section</title>
