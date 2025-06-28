@@ -135,7 +135,6 @@
         const playerEmail = localStorage.getItem("playerEmail");
         if (playerName && playerEmail) {
           userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail}`;
-          if (quizContainer) quizContainer.style.display = "block";
           if (leaderboard) leaderboard.style.display = "block";
           signInBtn.style.display = "none";
           logoutBtn.style.display = "inline-block";
