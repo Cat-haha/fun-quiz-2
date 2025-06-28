@@ -66,8 +66,6 @@
       // Google/Firebase Auth UI logic
       document.addEventListener("DOMContentLoaded", function () {
         firebase.auth().onAuthStateChanged(function(user) {
-          const quizContainer = document.getElementById("quiz-container");
-          const leaderboard = document.querySelector(".leaderboard-container");
           const userInfo = document.getElementById("user-info");
           const signInBtn = document.getElementById("google-signin-btn");
           const logoutBtn = document.getElementById("logout-button");
@@ -75,14 +73,10 @@
             localStorage.setItem("playerName", user.displayName);
             localStorage.setItem("playerEmail", user.email);
             userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
-            if (quizContainer) quizContainer.style.display = "block";
-            if (leaderboard) leaderboard.style.display = "block";
             signInBtn.style.display = "none";
             logoutBtn.style.display = "inline-block";
           } else {
             userInfo.textContent = "";
-            if (quizContainer) quizContainer.style.display = "none";
-            if (leaderboard) leaderboard.style.display = "none";
             signInBtn.style.display = "inline-block";
             logoutBtn.style.display = "none";
           }
@@ -161,7 +155,48 @@
         };
       }
 
-      // --- Leaderboard logic ---
+      // --- Google Auth and Leaderboard Logic ---
+document.addEventListener("DOMContentLoaded", function () {
+  // Google Auth UI logic
+  firebase.auth().onAuthStateChanged(function(user) {
+    const userInfo = document.getElementById("user-info");
+    const signInBtn = document.getElementById("google-signin-btn");
+    const logoutBtn = document.getElementById("logout-button");
+    if (user) {
+      localStorage.setItem("playerName", user.displayName);
+      localStorage.setItem("playerEmail", user.email);
+      userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
+      signInBtn.style.display = "none";
+      logoutBtn.style.display = "inline-block";
+    } else {
+      userInfo.textContent = "";
+      signInBtn.style.display = "inline-block";
+      logoutBtn.style.display = "none";
+    }
+  });
+  // Attach logout handler robustly
+  function attachLogoutHandler() {
+    var btn = document.getElementById("logout-button");
+    if (btn && !btn._logoutHandlerAttached) {
+      btn.onclick = function () {
+        firebase.auth().signOut();
+      };
+      btn._logoutHandlerAttached = true;
+    }
+  }
+  attachLogoutHandler();
+  new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
+
+  // Show leaderboard on load
+  setTimeout(loadLeaderboard, 500);
+  document.querySelector('button[onclick="loadLeaderboard()"], #refresh-leaderboard-btn')?.addEventListener('click', loadLeaderboard);
+});
+function signInWithGoogle() {
+  var provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: 'select_account' });
+  firebase.auth().signInWithPopup(provider);
+}
+// --- Leaderboard logic ---
 function loadLeaderboard() {
   const tableBody = document.querySelector("#leaderboard-table tbody");
   if (!tableBody) return;
@@ -176,7 +211,6 @@ function loadLeaderboard() {
       let firebaseLeaderboard = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        // Defensive: show all docs with a score, even if name is missing
         if (typeof data.score === 'undefined') return;
         found = true;
         const row = document.createElement("tr");
@@ -194,20 +228,28 @@ function loadLeaderboard() {
       displayLeaderboard();
     });
 }
-
-      function restartQuiz() {
-        localStorage.clear();
-        window.location.href = "index.html";
-      }
-
-      function endQuiz() {
-        window.location.href = "index.html";
-      }
-
-      document.addEventListener("DOMContentLoaded", function () {
-        setTimeout(loadLeaderboard, 500); // Wait for Firebase to initialize
-        document.querySelector('button[onclick="loadLeaderboard()"], #refresh-leaderboard-btn')?.addEventListener('click', loadLeaderboard);
-      });
+function restartQuiz() {
+  localStorage.clear();
+  window.location.href = "index.html";
+}
+function endQuiz() {
+  window.location.href = "index.html";
+}
+function displayLeaderboard() {
+  const leaderboardData = JSON.parse(localStorage.getItem("leaderboard")) || [];
+  const tableBody = document.querySelector("#leaderboard-table tbody");
+  if (!tableBody) return;
+  tableBody.innerHTML = "";
+  if (leaderboardData.length === 0) {
+    tableBody.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
+    return;
+  }
+  leaderboardData.forEach(({ name, score }) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${name ? name : "Anonymous"}</td><td>${score != null ? score : 0}</td>`;
+    tableBody.appendChild(row);
+  });
+}
     </script>
     <script src="script.js"></script>
   </body>
