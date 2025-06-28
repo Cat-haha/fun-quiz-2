@@ -247,6 +247,15 @@
 
       window.onload = function () {
         updateUserInfo();
+        // If user is already logged in, show quiz and load first question
+        if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+          document.getElementById('quiz-container').style.display = 'block';
+          callLoadQuestionWhenReady();
+        } else if (localStorage.getItem('userDisplayName')) {
+          // Fallback: if user info is in localStorage (from previous login)
+          document.getElementById('quiz-container').style.display = 'block';
+          callLoadQuestionWhenReady();
+        }
       };
 
       // Helper to wait for loadQuestion and call it after login
