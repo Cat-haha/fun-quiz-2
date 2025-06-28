@@ -480,6 +480,8 @@
             }
             nextButton.style.display = "inline-block";
             hasSuggested = false;
+            // Reset attemptCount for next question
+            attemptCount = 0;
             return;
           } else {
             // Track attempts for this question only
@@ -500,6 +502,8 @@
               }
               // Reset for next time this question is loaded
               window.digiornoAttemptCount = 0;
+              // Reset attemptCount for next question
+              attemptCount = 0;
             } else {
               feedback.textContent = "❌ Incorrect. Try again!";
             }
@@ -552,9 +556,7 @@
           }
 
           // Always show correct answer(s)
-          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
-            ", "
-          )}`;
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
           correctAnswerDiv.style.display = "block";
 
           if (question.feedbackImage) {
@@ -563,22 +565,23 @@
           }
           nextButton.style.display = "inline-block";
           hasSuggested = false;
+          // Reset attemptCount for next question
+          attemptCount = 0;
         } else {
-          attemptCount =
-            typeof attemptCount === "undefined" ? 1 : attemptCount + 1;
+          attemptCount = typeof attemptCount === "undefined" ? 1 : attemptCount + 1;
           if (attemptCount >= 2) {
             feedback.textContent = "❌ Incorrect.";
             suggestionBox.style.display = "none";
 
-            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
-              ", "
-            )}`;
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
             correctAnswerDiv.style.display = "block";
             nextButton.style.display = "inline-block";
             if (question.feedbackImage) {
               feedbackImage.src = question.feedbackImage;
               feedbackImage.style.display = "block";
             }
+            // Reset attemptCount for next question
+            attemptCount = 0;
           } else {
             feedback.textContent = "❌ Incorrect. Try again!";
           }
