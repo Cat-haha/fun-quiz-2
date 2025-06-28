@@ -178,9 +178,11 @@
               } else {
                 querySnapshot.forEach((doc) => {
                   const data = doc.data();
+                  // Defensive: skip if no name or score
+                  if (!data.name && typeof data.score === 'undefined') return;
                   const row = leaderboardTable.insertRow();
                   row.insertCell(0).textContent = data.name || "Anonymous";
-                  row.insertCell(1).textContent = data.score || 0;
+                  row.insertCell(1).textContent = data.score != null ? data.score : 0;
                 });
               }
             })
@@ -198,12 +200,12 @@
       }
 
       function endQuiz() {
-        // Optionally, you can clear state or redirect
         window.location.href = "index.html";
       }
 
       document.addEventListener("DOMContentLoaded", function () {
-        loadLeaderboard();
+        setTimeout(loadLeaderboard, 500); // Wait for Firebase to initialize
+        document.querySelector('button[onclick="loadLeaderboard()"], #refresh-leaderboard-btn')?.addEventListener('click', loadLeaderboard);
       });
     </script>
     <script src="script.js"></script>
