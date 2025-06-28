@@ -51,6 +51,23 @@
     <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
     <p id="user-info"></p>
     <script>
+      // Show user info from localStorage immediately for seamless experience
+      document.addEventListener("DOMContentLoaded", function () {
+        const userInfo = document.getElementById("user-info");
+        const quizContainer = document.getElementById("quiz-container");
+        const leaderboard = document.querySelector(".leaderboard-container");
+        const signInBtn = document.getElementById("google-signin-btn");
+        const logoutBtn = document.getElementById("logout-button");
+        const playerName = localStorage.getItem("playerName");
+        const playerEmail = localStorage.getItem("playerEmail");
+        if (playerName && playerEmail) {
+          userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail}`;
+          if (quizContainer) quizContainer.style.display = "block";
+          if (leaderboard) leaderboard.style.display = "block";
+          signInBtn.style.display = "none";
+          logoutBtn.style.display = "inline-block";
+        }
+      });
       document.addEventListener("DOMContentLoaded", function () {
         firebase.auth().onAuthStateChanged(function(user) {
           const quizContainer = document.getElementById("quiz-container");
