@@ -366,20 +366,33 @@
 
       function goToNextQuestion() {
         hasSuggested = false;
+        // Always switch to dark mode for the next question
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("darkMode", "true");
 
-        if (currentQuestionIndex >= questions.length) {
-          // Save the index before ending the quiz
-          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
-          document.addEventListener(
-            "keydown",
-            function () {
-              window.location.href = "geography_section.html";
-            },
-            { once: true }
-          );
+        // If on the last question, go to leaderboard
+        if (currentQuestionIndex >= questions.length - 1) {
+          window.location.href = "leaderboard.html";
+          return;
+        }
+
+        if (currentQuestionIndex === 2) {
+          document.getElementById("quiz-container").style.display = "none";
+          document.getElementById("transition-overlay").style.display = "flex";
+        } else if (currentQuestionIndex === 11) {
+          document.getElementById("quiz-container").style.display = "none";
+          document.getElementById("end-transition-overlay").style.display = "flex";
         } else {
-          // Save and load the next question
-          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+          currentQuestionIndex++;
+          localStorage.setItem(
+            "colorsSectionCurrentQuestionIndex",
+            currentQuestionIndex
+          );
+          // Only load next question if there are more questions
+          if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+          }
+          // If at the end, do nothing (no redirect, no alert)
         }
       }
     </script>
@@ -434,11 +447,7 @@
         document.body.classList.add("dark-mode");
         localStorage.setItem("darkMode", "true");
 
-        // If on the last question, go to leaderboard
-        if (currentQuestionIndex >= questions.length - 1) {
-          window.location.href = "leaderboard.html";
-          return;
-        }
+      
 
         if (currentQuestionIndex === 2) {
           document.getElementById("quiz-container").style.display = "none";
