@@ -380,10 +380,10 @@
       }
     </script>
     <!-- Add End Quiz button -->
-    <button id="end-quiz-button">End Quiz</button>
+    <button id="end-quiz-btn" style="display: block" onclick="endQuiz()">End Quiz</button>
     <script>
       // End Quiz button logic
-      const endQuizBtn = document.getElementById("end-quiz-button");
+      const endQuizBtn = document.getElementById("end-quiz-btn");
       if (endQuizBtn) {
         endQuizBtn.onclick = function () {
           if (confirm("Are you sure you want to end the quiz? You will be logged out and returned to the start.")) {
