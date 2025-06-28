@@ -150,7 +150,7 @@ function endQuiz() {
 
 function loadLeaderboard() {
   const tableBody = document.querySelector("#leaderboard-table tbody");
-  if (!tableBody) return; // Defensive: don't run if leaderboard table is not present
+  if (!tableBody) return;
   tableBody.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
   db.collection("leaderboard")
     .orderBy("score", "desc")
@@ -162,21 +162,20 @@ function loadLeaderboard() {
       let firebaseLeaderboard = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        if (typeof data.score === 'undefined' || data.name === undefined) return;
+        // Defensive: show all docs with a score, even if name is missing
+        if (typeof data.score === 'undefined') return;
         found = true;
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${data.name || "Anonymous"}</td><td>${data.score != null ? data.score : 0}</td>`;
+        row.innerHTML = `<td>${data.name ? data.name : "Anonymous"}</td><td>${data.score != null ? data.score : 0}</td>`;
         tableBody.appendChild(row);
-        firebaseLeaderboard.push({ name: data.name || "Anonymous", score: data.score != null ? data.score : 0 });
+        firebaseLeaderboard.push({ name: data.name ? data.name : "Anonymous", score: data.score != null ? data.score : 0 });
       });
       if (!found) {
         tableBody.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
       }
-      // Save Firebase leaderboard locally
       localStorage.setItem("leaderboard", JSON.stringify(firebaseLeaderboard));
     })
-    .catch((error) => {
-      console.error("Error loading leaderboard: ", error);
+    .catch(() => {
       // fallback to local leaderboard if Firebase fails
       displayLeaderboard();
     });
