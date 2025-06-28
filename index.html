@@ -54,9 +54,6 @@
     <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
     <p id="user-info"></p>
     <div class="body-container">
-<!-- ...existing code... -->
-
-
       <div id="quiz-container" style="display: none">
         <marquee class="marqueeH1" direction="right">
           <h1>FUN QUIZ WARMUP SECTION !!!</h1>
@@ -313,6 +310,23 @@
           feedbackImage: "https://i.postimg.cc/Y9zJFDgN/unnamed.jpg",
         },
       ];
+
+      // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
+      if (typeof userAnswers === 'undefined') window.userAnswers = [];
+      if (typeof currentScore === 'undefined') window.currentScore = parseInt(localStorage.getItem('currentScore') || '0');
+      if (typeof currentQuestionIndex === 'undefined') window.currentQuestionIndex = parseInt(localStorage.getItem('currentQuestionIndex') || '0');
+      if (typeof attemptCount === 'undefined') window.attemptCount = 0;
+      if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
+
+      // Add Enter key support for answer input
+      const answerInput = document.getElementById("answer");
+      if (answerInput) {
+        answerInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            submitAnswer();
+          }
+        });
+      }
 
       function goToNextQuestion() {
         hasSuggested = false;

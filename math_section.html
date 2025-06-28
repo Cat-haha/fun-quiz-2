@@ -453,6 +453,17 @@
           }
         }
       }
+
+      // Add Enter key support for answer input
+      const answerInput = document.getElementById("answer");
+      if (answerInput) {
+        answerInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            submitAnswer();
+          }
+        });
+      }
+
     </script>
     <script>
       // Dark mode toggle

@@ -226,6 +226,23 @@
         },
       ];
 
+      // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
+      if (typeof userAnswers === 'undefined') window.userAnswers = [];
+      if (typeof currentScore === 'undefined') window.currentScore = parseInt(localStorage.getItem('currentScore') || '0');
+      if (typeof currentQuestionIndex === 'undefined') window.currentQuestionIndex = parseInt(localStorage.getItem('currentQuestionIndex') || '0');
+      if (typeof attemptCount === 'undefined') window.attemptCount = 0;
+      if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
+
+      // Add Enter key support for answer input
+      const answerInput = document.getElementById("answer");
+      if (answerInput) {
+        answerInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            submitAnswer();
+          }
+        });
+      }
+
       function exitExplaination() {
         document.getElementById("explanation-container").style.display = "none";
         loadQuestion();
