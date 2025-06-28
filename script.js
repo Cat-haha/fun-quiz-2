@@ -150,31 +150,41 @@ function endQuiz() {
 
 function loadLeaderboard() {
   const tableBody = document.querySelector("#leaderboard-table tbody");
-  tableBody.innerHTML = ""; // Clear existing rows
-
+  if (!tableBody) return;
+  tableBody.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
+  // Defensive: check if firebase and db are available
+  if (typeof firebase === 'undefined' || !firebase.firestore || !db) {
+    tableBody.innerHTML = "<tr><td colspan='2'>Firestore not available.</td></tr>";
+    return;
+  }
   db.collection("leaderboard")
     .orderBy("score", "desc")
-    .limit(10)
+    .limit(50)
     .get()
     .then((querySnapshot) => {
+      let found = false;
+      tableBody.innerHTML = "";
       let firebaseLeaderboard = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        firebaseLeaderboard.push({ name: data.name, score: data.score });
+        if (typeof data.score === 'undefined') return;
+        found = true;
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${data.name}</td><td>${data.score}</td>`;
+        row.innerHTML = `<td>${data.name ? data.name : "Anonymous"}</td><td>${data.score != null ? data.score : 0}</td>`;
         tableBody.appendChild(row);
+        firebaseLeaderboard.push({ name: data.name ? data.name : "Anonymous", score: data.score != null ? data.score : 0 });
       });
-      // Save Firebase leaderboard locally
+      if (!found) {
+        tableBody.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
+      }
       localStorage.setItem("leaderboard", JSON.stringify(firebaseLeaderboard));
     })
     .catch((error) => {
-      console.error("Error loading leaderboard: ", error);
+      tableBody.innerHTML = `<tr><td colspan='2'>Error loading leaderboard.</td></tr>`;
       // fallback to local leaderboard if Firebase fails
       displayLeaderboard();
     });
 }
-
 
 
 
