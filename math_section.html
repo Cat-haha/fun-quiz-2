@@ -124,42 +124,10 @@
     <script src="custom.js"></script>
     <script src="script.js"></script>
     <script>
-      // Show user info from localStorage immediately for seamless experience
-      document.addEventListener("DOMContentLoaded", function () {
-        const userInfo = document.getElementById("user-info");
-        const quizContainer = document.getElementById("quiz-container");
-        const leaderboard = document.querySelector(".leaderboard-container");
-        const signInBtn = document.getElementById("google-signin-btn");
-        const logoutBtn = document.getElementById("logout-button");
-        const playerName = localStorage.getItem("playerName");
-        const playerEmail = localStorage.getItem("playerEmail");
-        if (playerName && playerEmail) {
-          userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail}`;
-          if (leaderboard) leaderboard.style.display = "block";
-          signInBtn.style.display = "none";
-          logoutBtn.style.display = "inline-block";
-        }
-      });
-      function signInWithGoogle() {
-        var provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' }); // Always prompt account selection
-        firebase.auth().signInWithPopup(provider);
-      }
-      // Attach logout handler robustly using MutationObserver
-      function attachLogoutHandler() {
-        var btn = document.getElementById("logout-button");
-        if (btn && !btn._logoutHandlerAttached) {
-          btn.onclick = function () {
-            firebase.auth().signOut();
-          };
-          btn._logoutHandlerAttached = true;
-        }
-      }
-      attachLogoutHandler();
-      document.addEventListener("DOMContentLoaded", attachLogoutHandler);
-      new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
-    </script>
-    <script>
+      // Remove all local UI/auth logic from this file except for signInWithGoogle and attachLogoutHandler
+      // Only keep the questions array and goToNextQuestion/submitAnswer logic
+      // All UI/auth state is managed by script.js, just like index.html
+
       // Make questions global so script.js can access them
       window.questions = [
         {
@@ -293,12 +261,8 @@
       function goToNextQuestion() {
         hasSuggested = false;
         currentQuestionIndex++;
-
         if (currentQuestionIndex >= questions.length) {
-          // Save the index before ending the quiz
           localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
-
-          // After the quiz ends, wait for a key press to go to next section
           document.addEventListener(
             "keydown",
             function () {
@@ -307,8 +271,7 @@
             { once: true }
           );
         } else {
-          // Save and load the next question
-          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+          loadQuestion();
         }
       }
     </script>
