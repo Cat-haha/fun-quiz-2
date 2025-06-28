@@ -150,20 +150,22 @@ function endQuiz() {
 
 function loadLeaderboard() {
   const tableBody = document.querySelector("#leaderboard-table tbody");
-  tableBody.innerHTML = ""; // Clear existing rows
-
+  tableBody.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
   db.collection("leaderboard")
     .orderBy("score", "desc")
-    .limit(10)
+    .limit(50)
     .get()
     .then((querySnapshot) => {
+      tableBody.innerHTML = "";
       let firebaseLeaderboard = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        firebaseLeaderboard.push({ name: data.name, score: data.score });
+        // Defensive: skip if no name or score
+        if (!data.name && typeof data.score === 'undefined') return;
         const row = document.createElement("tr");
-        row.innerHTML = `<td>${data.name}</td><td>${data.score}</td>`;
+        row.innerHTML = `<td>${data.name || "Anonymous"}</td><td>${data.score != null ? data.score : 0}</td>`;
         tableBody.appendChild(row);
+        firebaseLeaderboard.push({ name: data.name || "Anonymous", score: data.score != null ? data.score : 0 });
       });
       // Save Firebase leaderboard locally
       localStorage.setItem("leaderboard", JSON.stringify(firebaseLeaderboard));
