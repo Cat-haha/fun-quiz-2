@@ -55,11 +55,9 @@
     </style>
   </head>
   <body>
-    <button id="google-signin-btn" onclick="signInWithGoogle()">
-      Sign in with Google
-    </button>
+    <!-- Google/Firebase Auth UI logic -->
     <button id="logout-button" style="display: none">Logout</button>
-    <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
+    <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
     <p id="user-info"></p>
     <div class="body-container">
       <!-- Removed old start-form login -->
@@ -126,7 +124,7 @@
     <script src="custom.js"></script>
     <script src="script.js"></script>
     <script>
-      // Google Auth UI logic (copied from index.html)
+      // Google Auth UI logic
       document.addEventListener("DOMContentLoaded", function () {
         firebase.auth().onAuthStateChanged(function(user) {
           const quizContainer = document.getElementById("quiz-container");
@@ -151,9 +149,22 @@
             logoutBtn.style.display = "none";
           }
         });
+        // Attach logout handler robustly
+        function attachLogoutHandler() {
+          var btn = document.getElementById("logout-button");
+          if (btn && !btn._logoutHandlerAttached) {
+            btn.onclick = function () {
+              firebase.auth().signOut();
+            };
+            btn._logoutHandlerAttached = true;
+          }
+        }
+        attachLogoutHandler();
+        new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
       });
       function signInWithGoogle() {
         var provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' }); // Always prompt account selection
         firebase.auth().signInWithPopup(provider);
       }
       // Attach logout handler robustly using MutationObserver

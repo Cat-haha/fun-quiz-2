@@ -46,15 +46,56 @@
     /></a>
   </head>
   <body>
-    <button id="google-signin-btn" onclick="signInWithGoogle()">
-      Sign in with Google
-    </button>
+    <!-- Google/Firebase Auth UI logic -->
     <button id="logout-button" style="display: none">Logout</button>
+    <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
+    <p id="user-info"></p>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        firebase.auth().onAuthStateChanged(function(user) {
+          const quizContainer = document.getElementById("quiz-container");
+          const leaderboard = document.querySelector(".leaderboard-container");
+          const userInfo = document.getElementById("user-info");
+          const signInBtn = document.getElementById("google-signin-btn");
+          const logoutBtn = document.getElementById("logout-button");
+          if (user) {
+            localStorage.setItem("playerName", user.displayName);
+            localStorage.setItem("playerEmail", user.email);
+            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
+            if (quizContainer) quizContainer.style.display = "block";
+            if (leaderboard) leaderboard.style.display = "block";
+            signInBtn.style.display = "none";
+            logoutBtn.style.display = "inline-block";
+          } else {
+            userInfo.textContent = "";
+            if (quizContainer) quizContainer.style.display = "none";
+            if (leaderboard) leaderboard.style.display = "none";
+            signInBtn.style.display = "inline-block";
+            logoutBtn.style.display = "none";
+          }
+        });
+        function attachLogoutHandler() {
+          var btn = document.getElementById("logout-button");
+          if (btn && !btn._logoutHandlerAttached) {
+            btn.onclick = function () {
+              firebase.auth().signOut();
+            };
+            btn._logoutHandlerAttached = true;
+          }
+        }
+        attachLogoutHandler();
+        new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
+      });
+      function signInWithGoogle() {
+        var provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        firebase.auth().signInWithPopup(provider);
+      }
+    </script>
     <h1>PRESS START QUIZ BEFORE YOU START, <br />AND END QUIZ WHEN YOU END</h1>
     <a id="brain-link" href="brain_teasers.html" style="display: none">brain teasers</a>
     <button onclick="goBackAnIndex()">go back a question</button>
     <button onclick="goForwardAnIndex()">go forward a question</button>
-    <p id="user-info"></p>
     <div class="body-container">
       <!-- Removed old start-form login -->
       <div id="quiz-container" style="display: none">
@@ -114,51 +155,6 @@
     </div>
     <script src="custom.js"></script>
     <script src="script.js"></script>
-    <script>
-      // Google Auth UI logic (copied from index.html)
-      document.addEventListener("DOMContentLoaded", function () {
-        firebase.auth().onAuthStateChanged(function(user) {
-          const quizContainer = document.getElementById("quiz-container");
-          const leaderboard = document.querySelector(".leaderboard-container");
-          const userInfo = document.getElementById("user-info");
-          const signInBtn = document.getElementById("google-signin-btn");
-          const logoutBtn = document.getElementById("logout-button");
-          if (user) {
-            // Save user info to localStorage for consistency
-            localStorage.setItem("playerName", user.displayName);
-            localStorage.setItem("playerEmail", user.email);
-            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
-            quizContainer.style.display = "block";
-            leaderboard.style.display = "block";
-            signInBtn.style.display = "none";
-            logoutBtn.style.display = "inline-block";
-          } else {
-            userInfo.textContent = "";
-            quizContainer.style.display = "none";
-            leaderboard.style.display = "none";
-            signInBtn.style.display = "inline-block";
-            logoutBtn.style.display = "none";
-          }
-        });
-      });
-      function signInWithGoogle() {
-        var provider = new firebase.auth.GoogleAuthProvider();
-        firebase.auth().signInWithPopup(provider);
-      }
-      // Attach logout handler robustly using MutationObserver
-      function attachLogoutHandler() {
-        var btn = document.getElementById("logout-button");
-        if (btn && !btn._logoutHandlerAttached) {
-          btn.onclick = function () {
-            firebase.auth().signOut();
-          };
-          btn._logoutHandlerAttached = true;
-        }
-      }
-      attachLogoutHandler();
-      document.addEventListener("DOMContentLoaded", attachLogoutHandler);
-      new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
-    </script>
     <script>
       var questions = [
         {

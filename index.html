@@ -162,6 +162,7 @@
       });
       function signInWithGoogle() {
         var provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' }); // Always prompt account selection
         firebase.auth().signInWithPopup(provider);
       }
     </script>
