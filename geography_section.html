@@ -252,6 +252,15 @@
           loadQuestion(); // loadQuestion already saves currentQuestionIndex
         }
       }
+
+      // Helper to wait for loadQuestion and call it after login
+      function callLoadQuestionWhenReady() {
+        if (typeof loadQuestion === "function") {
+          loadQuestion();
+        } else {
+          setTimeout(callLoadQuestionWhenReady, 50);
+        }
+      }
     </script>
     <script>
       // Show user info from localStorage immediately for seamless experience
@@ -290,9 +299,7 @@
             logoutBtn.style.display = "inline-block";
 
             // Ensure the first question loads after login
-            if (typeof loadQuestion === "function") {
-              loadQuestion();
-            }
+            callLoadQuestionWhenReady();
           } else {
             userInfo.textContent = "";
             if (quizContainer) quizContainer.style.display = "none";

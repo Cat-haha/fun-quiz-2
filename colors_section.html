@@ -518,6 +518,15 @@
         // Add more if needed
       };
 
+      // Helper to wait for loadQuestion and call it after login
+      function callLoadQuestionWhenReady() {
+        if (typeof loadQuestion === "function") {
+          loadQuestion();
+        } else {
+          setTimeout(callLoadQuestionWhenReady, 50);
+        }
+      }
+
       // Ensure the first question loads after login
       firebase.auth().onAuthStateChanged(function(user) {
         const quizContainer = document.getElementById("quiz-container");
@@ -534,10 +543,7 @@
           signInBtn.style.display = "none";
           logoutBtn.style.display = "inline-block";
 
-          // Load the first question
-          if (typeof loadQuestion === "function") {
-            loadQuestion();
-          }
+          callLoadQuestionWhenReady();
         } else {
           userInfo.textContent = "";
           if (quizContainer) quizContainer.style.display = "none";

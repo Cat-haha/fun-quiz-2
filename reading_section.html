@@ -87,9 +87,7 @@
             logoutBtn.style.display = "inline-block";
 
             // Ensure the first question loads after login
-            if (typeof loadQuestion === "function") {
-              loadQuestion();
-            }
+            callLoadQuestionWhenReady();
           } else {
             userInfo.textContent = "";
             if (quizContainer) quizContainer.style.display = "none";
@@ -114,6 +112,15 @@
         var provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
         firebase.auth().signInWithPopup(provider);
+      }
+
+      // Helper to wait for loadQuestion and call it after login
+      function callLoadQuestionWhenReady() {
+        if (typeof loadQuestion === "function") {
+          loadQuestion();
+        } else {
+          setTimeout(callLoadQuestionWhenReady, 50);
+        }
       }
     </script>
     <div class="body-container">
