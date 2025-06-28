@@ -150,40 +150,88 @@ function endQuiz() {
 
 function loadLeaderboard() {
   const tableBody = document.querySelector("#leaderboard-table tbody");
-  if (!tableBody) return;
-  tableBody.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
-  // Defensive: check if firebase and db are available
-  if (typeof firebase === 'undefined' || !firebase.firestore || !db) {
-    tableBody.innerHTML = "<tr><td colspan='2'>Firestore not available.</td></tr>";
+  if (!tableBody) {
+    console.error("Leaderboard table body not found.");
     return;
   }
-  db.collection("leaderboard")
-    .orderBy("score", "desc")
-    .limit(50)
-    .get()
-    .then((querySnapshot) => {
-      let found = false;
-      tableBody.innerHTML = "";
-      let firebaseLeaderboard = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        if (typeof data.score === 'undefined') return;
-        found = true;
-        const row = document.createElement("tr");
-        row.innerHTML = `<td>${data.name ? data.name : "Anonymous"}</td><td>${data.score != null ? data.score : 0}</td>`;
-        tableBody.appendChild(row);
-        firebaseLeaderboard.push({ name: data.name ? data.name : "Anonymous", score: data.score != null ? data.score : 0 });
+  tableBody.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
+  if (typeof firebase === 'undefined') {
+    tableBody.innerHTML = "<tr><td colspan='2'>Firebase not defined.</td></tr>";
+    console.error("Firebase is not defined.");
+    return;
+  }
+  if (!firebase.firestore) {
+    tableBody.innerHTML = "<tr><td colspan='2'>Firestore not available.</td></tr>";
+    console.error("firebase.firestore is not available.");
+    return;
+  }
+  if (!db) {
+    tableBody.innerHTML = "<tr><td colspan='2'>DB instance not available.</td></tr>";
+    console.error("db instance is not available.");
+    return;
+  }
+  try {
+    db.collection("leaderboard")
+      .orderBy("score", "desc")
+      .limit(50)
+      .get()
+      .then((querySnapshot) => {
+        let found = false;
+        tableBody.innerHTML = "";
+        let firebaseLeaderboard = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          console.debug("Fetched doc:", data);
+          if (typeof data.score === 'undefined') {
+            console.warn("Doc missing score:", data);
+            return;
+          }
+          found = true;
+          const row = document.createElement("tr");
+          row.innerHTML = `<td>${data.name ? data.name : "Anonymous"}</td><td>${data.score != null ? data.score : 0}</td>`;
+          tableBody.appendChild(row);
+          firebaseLeaderboard.push({ name: data.name ? data.name : "Anonymous", score: data.score != null ? data.score : 0 });
+        });
+        if (!found) {
+          tableBody.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
+          console.warn("No valid leaderboard entries found in Firestore.");
+        }
+        localStorage.setItem("leaderboard", JSON.stringify(firebaseLeaderboard));
+        console.info("Leaderboard loaded from Firestore:", firebaseLeaderboard);
+      })
+      .catch((error) => {
+        tableBody.innerHTML = `<tr><td colspan='2'>Error loading leaderboard.</td></tr>`;
+        console.error("Error loading leaderboard from Firestore:", error);
+        // fallback to local leaderboard if Firebase fails
+        displayLeaderboard();
       });
-      if (!found) {
-        tableBody.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
-      }
-      localStorage.setItem("leaderboard", JSON.stringify(firebaseLeaderboard));
-    })
-    .catch((error) => {
-      tableBody.innerHTML = `<tr><td colspan='2'>Error loading leaderboard.</td></tr>`;
-      // fallback to local leaderboard if Firebase fails
-      displayLeaderboard();
-    });
+  } catch (err) {
+    tableBody.innerHTML = `<tr><td colspan='2'>Exception: ${err.message}</td></tr>`;
+    console.error("Exception in loadLeaderboard:", err);
+  }
+}
+
+function displayLeaderboard() {
+  const leaderboardData = JSON.parse(localStorage.getItem("leaderboard")) || [];
+  const tableBody = document.querySelector("#leaderboard-table tbody");
+  if (!tableBody) {
+    console.error("Leaderboard table body not found (displayLeaderboard)");
+    return;
+  }
+  tableBody.innerHTML = ""; // clear old rows
+
+  if (leaderboardData.length === 0) {
+    tableBody.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
+    console.warn("No scores in local leaderboard.");
+    return;
+  }
+
+  leaderboardData.forEach(({ name, score }) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `<td>${name ? name : "Anonymous"}</td><td>${score != null ? score : 0}</td>`;
+    tableBody.appendChild(row);
+  });
+  console.info("Displayed local leaderboard:", leaderboardData);
 }
 
 
@@ -554,11 +602,15 @@ let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
 function displayLeaderboard() {
   const leaderboardData = JSON.parse(localStorage.getItem("leaderboard")) || [];
   const tableBody = document.querySelector("#leaderboard-table tbody");
-  if (!tableBody) return;
+  if (!tableBody) {
+    console.error("Leaderboard table body not found (displayLeaderboard)");
+    return;
+  }
   tableBody.innerHTML = ""; // clear old rows
 
   if (leaderboardData.length === 0) {
     tableBody.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
+    console.warn("No scores in local leaderboard.");
     return;
   }
 
@@ -567,6 +619,7 @@ function displayLeaderboard() {
     row.innerHTML = `<td>${name ? name : "Anonymous"}</td><td>${score != null ? score : 0}</td>`;
     tableBody.appendChild(row);
   });
+  console.info("Displayed local leaderboard:", leaderboardData);
 }
 
 let username = localStorage.getItem("playerName") || "Anonymous";
