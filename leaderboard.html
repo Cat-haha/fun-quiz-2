@@ -17,9 +17,9 @@
     </style>
   </head>
   <body>
-    <button id="logout-button" style="display: none">Logout</button>
     <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
-    <p id="user-info"></p>
+    <button id="logout-button" style="display: none">Logout</button>
+    <button id="dark-mode-toggle" style="float: right">🌙 Dark Mode</button>
     <div class="leaderboard-container">
       <div class="leaderboard-content">
         <h2>Leaderboard</h2>
@@ -38,73 +38,58 @@
     <button onclick="loadLeaderboard()">Refresh Leaderboard</button>
     <br />
     <button id="restart-button" onclick="restartQuiz()">Restart Quiz</button>
-    <button id="end-quiz-btn" style="display: block" onclick="endQuiz()">End Quiz</button>
+    <p id="user-info"></p>
     <script>
-      // Show user info from localStorage immediately for seamless experience
-      document.addEventListener("DOMContentLoaded", function () {
-        const userInfo = document.getElementById("user-info");
-        const quizContainer = document.getElementById("quiz-container");
-        const leaderboard = document.querySelector(".leaderboard-container");
-        const signInBtn = document.getElementById("google-signin-btn");
-        const logoutBtn = document.getElementById("logout-button");
-        const playerName = localStorage.getItem("playerName");
-        const playerEmail = localStorage.getItem("playerEmail");
-        if (playerName && playerEmail) {
-          userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail}`;
-          if (quizContainer) quizContainer.style.display = "block";
-          if (leaderboard) leaderboard.style.display = "block";
-          signInBtn.style.display = "none";
-          logoutBtn.style.display = "inline-block";
-          // Show first question if logged in and quiz UI is visible
-          if (typeof callLoadQuestionWhenReady === 'function') {
-            callLoadQuestionWhenReady();
-          } else if (typeof loadQuestion === 'function') {
-            loadQuestion();
-          }
-        }
-      });
-      // Google/Firebase Auth UI logic
+      // Google Auth UI logic (copied from index.html)
       document.addEventListener("DOMContentLoaded", function () {
         firebase.auth().onAuthStateChanged(function(user) {
-          const quizContainer = document.getElementById("quiz-container");
           const leaderboard = document.querySelector(".leaderboard-container");
           const userInfo = document.getElementById("user-info");
           const signInBtn = document.getElementById("google-signin-btn");
           const logoutBtn = document.getElementById("logout-button");
           if (user) {
+            // Save user info to localStorage for consistency
             localStorage.setItem("playerName", user.displayName);
             localStorage.setItem("playerEmail", user.email);
             userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
-            if (quizContainer) quizContainer.style.display = "block";
-            if (leaderboard) leaderboard.style.display = "block";
+            leaderboard.style.display = "block";
             signInBtn.style.display = "none";
             logoutBtn.style.display = "inline-block";
           } else {
             userInfo.textContent = "";
-            if (quizContainer) quizContainer.style.display = "none";
-            if (leaderboard) leaderboard.style.display = "none";
+            leaderboard.style.display = "none";
             signInBtn.style.display = "inline-block";
             logoutBtn.style.display = "none";
           }
         });
-        // Attach logout handler robustly
-        function attachLogoutHandler() {
-          var btn = document.getElementById("logout-button");
-          if (btn && !btn._logoutHandlerAttached) {
-            btn.onclick = function () {
-              firebase.auth().signOut();
-            };
-            btn._logoutHandlerAttached = true;
-          }
-        }
-        attachLogoutHandler();
-        new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
       });
       function signInWithGoogle() {
         var provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' }); // Always prompt account selection
         firebase.auth().signInWithPopup(provider);
       }
+      // Attach logout handler robustly using MutationObserver
+      function attachLogoutHandler() {
+        var btn = document.getElementById("logout-button");
+        if (btn && !btn._logoutHandlerAttached) {
+          btn.onclick = function () {
+            firebase.auth().signOut();
+          };
+          btn._logoutHandlerAttached = true;
+        }
+      }
+      attachLogoutHandler();
+      document.addEventListener("DOMContentLoaded", attachLogoutHandler);
+      new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
+    </script>
+    <script>
+      window.onload = function () {
+        endQuiz();
+        alert(
+          "You've finished the quiz! Refresh the leaderboard if your score doesn't show up (unless you're not on it, in that case, HA!)"
+        );
+      };
+    </script>
+    <script>
       // Dark mode toggle
       const darkModeBtn = document.getElementById("dark-mode-toggle");
       darkModeBtn.addEventListener("click", function () {
@@ -120,93 +105,6 @@
       if (localStorage.getItem("darkMode") === "true") {
         document.body.classList.add("dark-mode");
       }
-
-      // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
-      if (typeof userAnswers === 'undefined') window.userAnswers = [];
-      if (typeof currentScore === 'undefined') window.currentScore = parseInt(localStorage.getItem('currentScore') || '0');
-      if (typeof currentQuestionIndex === 'undefined') window.currentQuestionIndex = parseInt(localStorage.getItem('currentQuestionIndex') || '0');
-      if (typeof attemptCount === 'undefined') window.attemptCount = 0;
-      if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
-
-      // Add Enter key support for answer input and next question
-      const answerInput = document.getElementById("answer");
-      const nextButton = document.getElementById("next-button");
-      if (answerInput) {
-        answerInput.addEventListener("keydown", function (e) {
-          if (e.key === "Enter") {
-            if (nextButton && nextButton.style.display !== "none") {
-              goToNextQuestion();
-            } else {
-              submitAnswer();
-            }
-          }
-        });
-      }
-      if (nextButton) {
-        nextButton.addEventListener("click", goToNextQuestion);
-      }
-      // Add logout button functionality
-      const logoutBtn = document.getElementById("logout-button");
-      if (logoutBtn) {
-        logoutBtn.onclick = function () {
-          if (typeof firebase !== 'undefined' && firebase.auth) {
-            firebase.auth().signOut().then(function () {
-              localStorage.clear();
-              window.location.href = "index.html";
-            });
-          } else {
-            localStorage.clear();
-            window.location.href = "index.html";
-          }
-        };
-      }
-
-      // --- Leaderboard logic ---
-      function loadLeaderboard() {
-        const leaderboardTable = document.getElementById("leaderboard-table").getElementsByTagName('tbody')[0];
-        leaderboardTable.innerHTML = "<tr><td colspan='2'>Loading...</td></tr>";
-        // Use Firestore to fetch leaderboard data
-        if (typeof firebase !== 'undefined' && firebase.firestore) {
-          firebase.firestore().collection("leaderboard")
-            .orderBy("score", "desc")
-            .limit(50)
-            .get()
-            .then((querySnapshot) => {
-              leaderboardTable.innerHTML = "";
-              if (querySnapshot.empty) {
-                leaderboardTable.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
-              } else {
-                querySnapshot.forEach((doc) => {
-                  const data = doc.data();
-                  // Defensive: skip if no name or score
-                  if (!data.name && typeof data.score === 'undefined') return;
-                  const row = leaderboardTable.insertRow();
-                  row.insertCell(0).textContent = data.name || "Anonymous";
-                  row.insertCell(1).textContent = data.score != null ? data.score : 0;
-                });
-              }
-            })
-            .catch((error) => {
-              leaderboardTable.innerHTML = `<tr><td colspan='2'>Error: ${error.message}</td></tr>`;
-            });
-        } else {
-          leaderboardTable.innerHTML = "<tr><td colspan='2'>Firestore not available.</td></tr>";
-        }
-      }
-
-      function restartQuiz() {
-        localStorage.clear();
-        window.location.href = "index.html";
-      }
-
-      function endQuiz() {
-        window.location.href = "index.html";
-      }
-
-      document.addEventListener("DOMContentLoaded", function () {
-        setTimeout(loadLeaderboard, 500); // Wait for Firebase to initialize
-        document.querySelector('button[onclick="loadLeaderboard()"], #refresh-leaderboard-btn')?.addEventListener('click', loadLeaderboard);
-      });
     </script>
     <script src="script.js"></script>
   </body>
