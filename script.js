@@ -29,6 +29,56 @@ function updateUserInfo() {
   userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail} || Score: ${currentScore}`;
 }
 
+function loadQuestion() {
+  attemptCount = 0;
+  clickAttemptCount = 0;
+  document.getElementById("correct-answer").style.display = "none";
+  localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+  localStorage.setItem("currentScore", currentScore.toString());
+  const question = questions[currentQuestionIndex];
+  const questionElement = document.getElementById("question");
+  const questionImage = document.getElementById("question-image");
+  const answerInput = document.getElementById("answer");
+  const feedback = document.getElementById("feedback");
+  const feedbackImage = document.getElementById("feedback-image");
+  const nextButton = document.getElementById("next-button");
+  const progressElement = document.getElementById("progress");
+
+  questionElement.textContent = question.question;
+  answerInput.value = "";
+  feedback.textContent = "";
+  feedbackImage.src = "";
+  feedbackImage.style.display = "none";
+  nextButton.style.display = "none";
+  progressElement.textContent = `Question ${
+    currentQuestionIndex + 1
+  } of ${questions.length}`;
+
+  if (question.type === "click") {
+    questionImage.src = question.image;
+    questionImage.style.display = "block";
+    questionImage.onclick = function (event) {
+      const userClickedWaldo = checkClickOnWaldo(event, question);
+if (userClickedWaldo) {
+  showFeedback(true, question);
+} else {
+  clickAttemptCount++;
+  if (clickAttemptCount >= 3) {
+    showFeedback(false, question, true); // true = force fail
+  } else {
+    showFeedback(false, question);
+  }
+}
+
+    };
+  } else {
+    questionImage.style.display = question.image ? "block" : "none";
+    questionImage.src = question.image || "";
+    questionImage.onclick = null;
+  }
+};  
+
+
 // === Auth State Listener ===
 firebase.auth().onAuthStateChanged((user) => {
   if (user) {
@@ -126,54 +176,6 @@ function loadLeaderboard() {
 }
 
 
-function loadQuestion() {
-  attemptCount = 0;
-  clickAttemptCount = 0;
-  document.getElementById("correct-answer").style.display = "none";
-  localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
-  localStorage.setItem("currentScore", currentScore.toString());
-  const question = questions[currentQuestionIndex];
-  const questionElement = document.getElementById("question");
-  const questionImage = document.getElementById("question-image");
-  const answerInput = document.getElementById("answer");
-  const feedback = document.getElementById("feedback");
-  const feedbackImage = document.getElementById("feedback-image");
-  const nextButton = document.getElementById("next-button");
-  const progressElement = document.getElementById("progress");
-
-  questionElement.textContent = question.question;
-  answerInput.value = "";
-  feedback.textContent = "";
-  feedbackImage.src = "";
-  feedbackImage.style.display = "none";
-  nextButton.style.display = "none";
-  progressElement.textContent = `Question ${
-    currentQuestionIndex + 1
-  } of ${questions.length}`;
-
-  if (question.type === "click") {
-    questionImage.src = question.image;
-    questionImage.style.display = "block";
-    questionImage.onclick = function (event) {
-      const userClickedWaldo = checkClickOnWaldo(event, question);
-if (userClickedWaldo) {
-  showFeedback(true, question);
-} else {
-  clickAttemptCount++;
-  if (clickAttemptCount >= 3) {
-    showFeedback(false, question, true); // true = force fail
-  } else {
-    showFeedback(false, question);
-  }
-}
-
-    };
-  } else {
-    questionImage.style.display = question.image ? "block" : "none";
-    questionImage.src = question.image || "";
-    questionImage.onclick = null;
-  }
-};  
 
 
 function checkClickOnWaldo(event, question) {
