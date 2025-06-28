@@ -554,11 +554,17 @@ let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
 function displayLeaderboard() {
   const leaderboardData = JSON.parse(localStorage.getItem("leaderboard")) || [];
   const tableBody = document.querySelector("#leaderboard-table tbody");
+  if (!tableBody) return;
   tableBody.innerHTML = ""; // clear old rows
+
+  if (leaderboardData.length === 0) {
+    tableBody.innerHTML = "<tr><td colspan='2'>No scores yet.</td></tr>";
+    return;
+  }
 
   leaderboardData.forEach(({ name, score }) => {
     const row = document.createElement("tr");
-    row.innerHTML = `<td>${name}</td><td>${score}</td>`;
+    row.innerHTML = `<td>${name ? name : "Anonymous"}</td><td>${score != null ? score : 0}</td>`;
     tableBody.appendChild(row);
   });
 }
