@@ -315,7 +315,7 @@
     <script>
       function submitAnswer() {
         const answerInput = document.getElementById("answer");
-        const userAnswer = answerInput.value.trim();
+        const userAnswer = answerInput.value.trim().toLowerCase();
         const question = questions[currentQuestionIndex];
         const feedback = document.getElementById("feedback");
         const feedbackImage = document.getElementById("feedback-image");
@@ -327,8 +327,6 @@
         correctAnswerDiv.style.display = "none";
 
         if (question.type === "click") return;
-
-        // === Lettuce easter egg ===
 
         // Special logic for question 24 (index 5 in your math_section.html)
         if (
@@ -343,7 +341,6 @@
             correctAnswerDiv.textContent = "Correct answer(s): brady, geometry";
             correctAnswerDiv.style.display = "block";
             suggestionBox.style.display = "none";
-            // Prevent infinite score abuse
             let answeredQuestions = JSON.parse(
               localStorage.getItem("answeredQuestions") || "[]"
             );
@@ -366,22 +363,18 @@
             hasSuggested = false;
           } else if (hasBrady || hasGeometry) {
             feedback.textContent = "Almost... (missing something...)";
-            correctAnswerDiv.style.display = "none"; // Don't show correct answer yet
+            correctAnswerDiv.style.display = "none";
             suggestionBox.style.display = "none";
             nextButton.style.display = "none";
-            // Show a special image for "Almost..."
-            feedbackImage.src = "https://i.postimg.cc/LsZ7Xd09/image.png"; // <-- your chosen "almost" image
+            feedbackImage.src = "https://i.postimg.cc/LsZ7Xd09/image.png";
             feedbackImage.style.display = "block";
           } else {
-            attemptCount =
-              (typeof attemptCount === "number" ? attemptCount : 0) + 1;
+            attemptCount = (typeof attemptCount === "number" ? attemptCount : 0) + 1;
             if (attemptCount >= 2) {
               feedback.textContent = "❌ Incorrect.";
-              correctAnswerDiv.textContent =
-                "Correct answer(s): brady, geometry";
+              correctAnswerDiv.textContent = "Correct answer(s): brady, geometry";
               correctAnswerDiv.style.display = "block";
               nextButton.style.display = "inline-block";
-              // Show the feedback image from the questions array if available
               if (question.feedbackImage) {
                 feedbackImage.src = question.feedbackImage;
                 feedbackImage.style.display = "block";
@@ -424,8 +417,6 @@
             questionType: "text",
           });
           question.loggedAnswer = true;
-
-          // 💾 Save to localStorage
           localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
         }
 
@@ -433,8 +424,6 @@
         if (isCorrect) {
           feedback.textContent = "✅ Correct!";
           suggestionBox.style.display = "none";
-
-          // Prevent infinite score abuse
           let answeredQuestions = JSON.parse(
             localStorage.getItem("answeredQuestions") || "[]"
           );
@@ -449,32 +438,22 @@
             );
             question.answeredCorrectly = true;
           }
-
           if (question.feedbackImage) {
             feedbackImage.src = question.feedbackImage;
             feedbackImage.style.display = "block";
           }
-
-          // Always show correct answer(s)
-          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
-            ", "
-          )}`;
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
           correctAnswerDiv.style.display = "block";
-
           nextButton.style.display = "inline-block";
           hasSuggested = false;
         } else {
-          attemptCount++;
+          attemptCount = (typeof attemptCount === "number" ? attemptCount : 0) + 1;
           if (attemptCount >= 2) {
             feedback.textContent = "❌ Incorrect.";
             suggestionBox.style.display = "none";
-
-            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
-              ", "
-            )}`;
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
             correctAnswerDiv.style.display = "block";
             nextButton.style.display = "inline-block";
-
             if (question.feedbackImage) {
               feedbackImage.src = question.feedbackImage;
               feedbackImage.style.display = "block";
