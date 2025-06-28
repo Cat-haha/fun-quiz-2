@@ -54,6 +54,12 @@
           if (leaderboard) leaderboard.style.display = "block";
           signInBtn.style.display = "none";
           logoutBtn.style.display = "inline-block";
+          // Show first question if logged in and quiz UI is visible
+          if (typeof callLoadQuestionWhenReady === 'function') {
+            callLoadQuestionWhenReady();
+          } else if (typeof loadQuestion === 'function') {
+            loadQuestion();
+          }
         }
       });
       // Google/Firebase Auth UI logic
