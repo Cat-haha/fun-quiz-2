@@ -247,27 +247,37 @@
       if (typeof attemptCount === 'undefined') window.attemptCount = 0;
       if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
 
-      // Add Enter key support for answer input
+      // Add Enter key support for answer input and next question
       const answerInput = document.getElementById("answer");
+      const nextButton = document.getElementById("next-button");
       if (answerInput) {
         answerInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") {
-            submitAnswer();
+            if (nextButton && nextButton.style.display !== "none") {
+              goToNextQuestion();
+            } else {
+              submitAnswer();
+            }
           }
         });
       }
-
-      function goToNextQuestion() {
-        hasSuggested = false;
-        currentQuestionIndex++;
-
-        if (currentQuestionIndex >= questions.length) {
-          // Save the index before ending the quiz
-          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
-        } else {
-          // Save and load the next question
-          loadQuestion(); // loadQuestion already saves currentQuestionIndex
-        }
+      if (nextButton) {
+        nextButton.addEventListener("click", goToNextQuestion);
+      }
+      // Add logout button functionality
+      const logoutBtn = document.getElementById("logout-button");
+      if (logoutBtn) {
+        logoutBtn.onclick = function () {
+          if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().signOut().then(function () {
+              localStorage.clear();
+              window.location.href = "index.html";
+            });
+          } else {
+            localStorage.clear();
+            window.location.href = "index.html";
+          }
+        };
       }
 
       // Helper to wait for loadQuestion and call it after login

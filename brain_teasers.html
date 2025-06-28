@@ -233,51 +233,39 @@
       if (typeof attemptCount === 'undefined') window.attemptCount = 0;
       if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
 
-      // Add Enter key support for answer input
+      // Add Enter key support for answer input and next question
       const answerInput = document.getElementById("answer");
+      const nextButton = document.getElementById("next-button");
       if (answerInput) {
         answerInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") {
-            submitAnswer();
+            if (nextButton && nextButton.style.display !== "none") {
+              goToNextQuestion();
+            } else {
+              submitAnswer();
+            }
           }
         });
       }
-
-      function exitExplaination() {
-        document.getElementById("explanation-container").style.display = "none";
-        loadQuestion();
+      if (nextButton) {
+        nextButton.addEventListener("click", goToNextQuestion);
+      }
+      // Add logout button functionality
+      const logoutBtn = document.getElementById("logout-button");
+      if (logoutBtn) {
+        logoutBtn.onclick = function () {
+          if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().signOut().then(function () {
+              localStorage.clear();
+              window.location.href = "index.html";
+            });
+          } else {
+            localStorage.clear();
+            window.location.href = "index.html";
+          }
+        };
       }
 
-      function goToNextQuestion() {
-        hasSuggested = false;
-        currentQuestionIndex++;
-
-        if (currentQuestionIndex >= questions.length) {
-          // Save the index before ending the quiz
-          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
-          document.addEventListener(
-            "keydown",
-            function () {
-              window.location.href = "colors_section.html";
-            },
-            { once: true }
-          );
-        } else {
-          // Save and load the next question
-          loadQuestion(); // loadQuestion already saves currentQuestionIndex
-        }
-      }
-
-      // Helper to wait for loadQuestion and call it after login
-      function callLoadQuestionWhenReady() {
-        if (typeof loadQuestion === "function") {
-          loadQuestion();
-        } else {
-          setTimeout(callLoadQuestionWhenReady, 50);
-        }
-      }
-    </script>
-    <script>
       // Dark mode toggle
       const darkModeBtn = document.getElementById("dark-mode-toggle");
       darkModeBtn.addEventListener("click", function () {

@@ -454,14 +454,23 @@
         }
       }
 
-      // Add Enter key support for answer input
+      // Add Enter key support for answer input and next question
       const answerInput = document.getElementById("answer");
+      const nextButton = document.getElementById("next-button");
       if (answerInput) {
         answerInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") {
-            submitAnswer();
+            // If next button is visible, go to next question, else submit
+            if (nextButton && nextButton.style.display !== "none") {
+              goToNextQuestion();
+            } else {
+              submitAnswer();
+            }
           }
         });
+      }
+      if (nextButton) {
+        nextButton.addEventListener("click", goToNextQuestion);
       }
 
     </script>
