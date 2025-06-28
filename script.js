@@ -1,3 +1,20 @@
+// --- Firebase Initialization (shared for all sections) ---
+if (typeof firebase !== 'undefined' && firebase && firebase.apps && firebase.apps.length === 0) {
+  firebase.initializeApp({
+    apiKey: "AIzaSyCDlykaXg7KdQPv3jeCOrnRV1Z_6P1n5S0",
+    authDomain: "funquiz-f5177.firebaseapp.com",
+    projectId: "funquiz-f5177",
+    storageBucket: "funquiz-f5177.appspot.com",
+    messagingSenderId: "243832133348",
+    appId: "1:243832133348:web:03d6746d63388112417ef1",
+    measurementId: "G-RG453ZV61K"
+  });
+}
+// Only declare db if not already declared
+if (typeof db === 'undefined') {
+  var db = firebase.firestore();
+}
+
 // === Variables First ===
 let userAnswers = [];
 let currentScore = parseInt(localStorage.getItem("currentScore")) || 0;
