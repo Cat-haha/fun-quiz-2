@@ -288,6 +288,11 @@
             if (leaderboard) leaderboard.style.display = "block";
             signInBtn.style.display = "none";
             logoutBtn.style.display = "inline-block";
+
+            // Ensure the first question loads after login
+            if (typeof loadQuestion === "function") {
+              loadQuestion();
+            }
           } else {
             userInfo.textContent = "";
             if (quizContainer) quizContainer.style.display = "none";

@@ -517,6 +517,35 @@
         [colorsSection75Index + 8]: "https://i.postimg.cc/W4789Jjx/image.png", // #84
         // Add more if needed
       };
+
+      // Ensure the first question loads after login
+      firebase.auth().onAuthStateChanged(function(user) {
+        const quizContainer = document.getElementById("quiz-container");
+        const leaderboard = document.querySelector(".leaderboard-container");
+        const userInfo = document.getElementById("user-info");
+        const signInBtn = document.getElementById("google-signin-btn");
+        const logoutBtn = document.getElementById("logout-button");
+        if (user) {
+          localStorage.setItem("playerName", user.displayName);
+          localStorage.setItem("playerEmail", user.email);
+          userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
+          if (quizContainer) quizContainer.style.display = "block";
+          if (leaderboard) leaderboard.style.display = "block";
+          signInBtn.style.display = "none";
+          logoutBtn.style.display = "inline-block";
+
+          // Load the first question
+          if (typeof loadQuestion === "function") {
+            loadQuestion();
+          }
+        } else {
+          userInfo.textContent = "";
+          if (quizContainer) quizContainer.style.display = "none";
+          if (leaderboard) leaderboard.style.display = "none";
+          signInBtn.style.display = "inline-block";
+          logoutBtn.style.display = "none";
+        }
+      });
     </script>
   </body>
 </html>
