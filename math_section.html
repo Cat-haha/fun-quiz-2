@@ -278,6 +278,13 @@
         },
       ];
 
+      // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
+      if (typeof userAnswers === 'undefined') window.userAnswers = [];
+      if (typeof currentScore === 'undefined') window.currentScore = parseInt(localStorage.getItem('currentScore') || '0');
+      if (typeof currentQuestionIndex === 'undefined') window.currentQuestionIndex = parseInt(localStorage.getItem('currentQuestionIndex') || '0');
+      if (typeof attemptCount === 'undefined') window.attemptCount = 0;
+      if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
+
       function goToNextQuestion() {
         hasSuggested = false;
         currentQuestionIndex++;
@@ -294,25 +301,7 @@
           loadQuestion();
         }
       }
-    </script>
-    <script>
-      // Dark mode toggle
-      const darkModeBtn = document.getElementById("dark-mode-toggle");
-      darkModeBtn.addEventListener("click", function () {
-        document.body.classList.toggle("dark-mode");
-        // Save preference to localStorage
-        localStorage.setItem(
-          "darkMode",
-          document.body.classList.contains("dark-mode")
-        );
-      });
 
-      // On page load, restore preference
-      if (localStorage.getItem("darkMode") === "true") {
-        document.body.classList.add("dark-mode");
-      }
-    </script>
-    <script>
       function submitAnswer() {
         const answerInput = document.getElementById("answer");
         const userAnswer = answerInput.value.trim().toLowerCase();
@@ -321,6 +310,7 @@
         const feedbackImage = document.getElementById("feedback-image");
         const nextButton = document.getElementById("next-button");
         const correctAnswerDiv = document.getElementById("correct-answer");
+        const suggestionBox = document.getElementById("suggestion-box");
 
         feedback.innerHTML = "";
         feedbackImage.style.display = "none";
@@ -462,6 +452,23 @@
             feedback.textContent = "❌ Incorrect. Try again!";
           }
         }
+      }
+    </script>
+    <script>
+      // Dark mode toggle
+      const darkModeBtn = document.getElementById("dark-mode-toggle");
+      darkModeBtn.addEventListener("click", function () {
+        document.body.classList.toggle("dark-mode");
+        // Save preference to localStorage
+        localStorage.setItem(
+          "darkMode",
+          document.body.classList.contains("dark-mode")
+        );
+      });
+
+      // On page load, restore preference
+      if (localStorage.getItem("darkMode") === "true") {
+        document.body.classList.add("dark-mode");
       }
     </script>
   </body>
