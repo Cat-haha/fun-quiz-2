@@ -370,9 +370,9 @@
         document.body.classList.add("dark-mode");
         localStorage.setItem("darkMode", "true");
 
-        // If on the last question, go to leaderboard
+        // If on the last question, go to geography section
         if (currentQuestionIndex >= questions.length - 1) {
-          window.location.href = "leaderboard.html";
+          window.location.href = "geography_section.html";
           return;
         }
 
@@ -474,17 +474,42 @@
         const feedback = document.getElementById("feedback");
         const feedbackImage = document.getElementById("feedback-image");
         const nextButton = document.getElementById("next-button");
+        const correctAnswerDiv = document.getElementById("correct-answer");
 
+        feedback.innerHTML = "";
+        feedbackImage.style.display = "none";
+        correctAnswerDiv.style.display = "none";
+
+        if (question.type === "click") return;
+
+        // === Lettuce easter egg for #73 only ===
+        if (
+          currentQuestionIndex === 9 &&
+          question.answer && Array.isArray(question.answer) &&
+          question.answer.includes("lettuce")
+        ) {
+          feedback.textContent = "HINT: It's not lettuce";
+          if (question.hintImage) {
+            feedbackImage.src = question.hintImage;
+            feedbackImage.style.display = "block";
+          }
+          return;
+        }
+
+        // === Standard answer checking ===
+        const acceptedAnswers = Array.isArray(question.answer)
+          ? question.answer.map((a) => a.trim().toLowerCase())
+          : [question.answer.trim().toLowerCase()];
+
+        // === Show feedback ===
         if (isCorrect) {
-          feedback.textContent = "✅ Correct! You found Waldo!";
+          feedback.textContent = "✅ Correct!";
           suggestionBox.style.display = "none";
+
+          // Prevent infinite score abuse
           let answeredQuestions = JSON.parse(
             localStorage.getItem("answeredQuestions") || "[]"
           );
-          if (answeredQuestions.includes(currentQuestionIndex)) {
-            feedback.textContent = "You've already answered this question!";
-            return;
-          }
           if (!answeredQuestions.includes(currentQuestionIndex)) {
             currentScore++;
             updateUserInfo();
@@ -496,30 +521,35 @@
             );
             question.answeredCorrectly = true;
           }
+
+          // Always show correct answer(s)
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+          correctAnswerDiv.style.display = "block";
+
           if (question.feedbackImage) {
             feedbackImage.src = question.feedbackImage;
             feedbackImage.style.display = "block";
           }
           nextButton.style.display = "inline-block";
           hasSuggested = false;
-
-          // Only transition after question #74 (index 10)
-          if (
-            currentQuestionIndex > 11 &&
-            currentQuestionIndex <= 20 && // up to and including #84
-            document.body.classList.contains("dark-mode")
-          ) {
-            transitionToLightModeWithImage(
-              "https://i.postimg.cc/L6qyHXBZ/image.png"
-            );
-          }
-          return;
         } else {
-          feedback.textContent = "Oops! That's not Waldo.";
-          feedbackImage.style.display = "none";
-        }
+          attemptCount =
+            typeof attemptCount === "undefined" ? 1 : attemptCount + 1;
+          if (attemptCount >= 2) {
+            feedback.textContent = "❌ Incorrect.";
+            suggestionBox.style.display = "none";
 
-        nextButton.style.display = "inline-block";
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+            correctAnswerDiv.style.display = "block";
+            nextButton.style.display = "inline-block";
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+          } else {
+            feedback.textContent = "❌ Incorrect. Try again!";
+          }
+        }
       }
 
       const colorsSection75Index = questions.findIndex(
