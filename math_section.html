@@ -124,11 +124,44 @@
     <script src="custom.js"></script>
     <script src="script.js"></script>
     <script>
-      // Remove all local UI/auth logic from this file except for signInWithGoogle and attachLogoutHandler
-      // Only keep the questions array and goToNextQuestion/submitAnswer logic
-      // All UI/auth state is managed by script.js, just like index.html
+      document.addEventListener("DOMContentLoaded", function () {
+        const userInfo = document.getElementById("user-info");
+        const quizContainer = document.getElementById("quiz-container");
+        const leaderboard = document.querySelector(".leaderboard-container");
+        const signInBtn = document.getElementById("google-signin-btn");
+        const logoutBtn = document.getElementById("logout-button");
+        const playerName = localStorage.getItem("playerName");
+        const playerEmail = localStorage.getItem("playerEmail");
+        if (playerName && playerEmail) {
+          userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail}`;
+          if (quizContainer) quizContainer.style.display = "block";
+          if (leaderboard) leaderboard.style.display = "block";
+          signInBtn.style.display = "none";
+          logoutBtn.style.display = "inline-block";
+          // Show first question if logged in and quiz UI is visible
+          if (typeof callLoadQuestionWhenReady === 'function') {
+            callLoadQuestionWhenReady();
+          } else if (typeof loadQuestion === 'function') {
+            loadQuestion();
+          }
+        }
+      });
 
-      // Make questions global so script.js can access them
+      function signInWithGoogle() {
+        var provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        firebase.auth().signInWithPopup(provider);
+      }
+
+      // Helper to wait for loadQuestion and call it after login
+      function callLoadQuestionWhenReady() {
+        if (typeof loadQuestion === "function") {
+          loadQuestion();
+        } else {
+          setTimeout(callLoadQuestionWhenReady, 50);
+        }
+      }
+
       window.questions = [
         {
           question: "#20. What's the measure of the angle?",
@@ -244,28 +277,6 @@
           feedbackImage: "https://i.postimg.cc/3R0Df8P8/image.png",
         },
       ];
-
-      window.onload = function () {
-        updateUserInfo();
-        // If user is already logged in, show quiz and load first question
-        if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
-          document.getElementById('quiz-container').style.display = 'block';
-          callLoadQuestionWhenReady();
-        } else if (localStorage.getItem('userDisplayName')) {
-          // Fallback: if user info is in localStorage (from previous login)
-          document.getElementById('quiz-container').style.display = 'block';
-          callLoadQuestionWhenReady();
-        }
-      };
-
-      // Helper to wait for loadQuestion and call it after login
-      function callLoadQuestionWhenReady() {
-        if (typeof loadQuestion === "function") {
-          loadQuestion();
-        } else {
-          setTimeout(callLoadQuestionWhenReady, 50);
-        }
-      }
 
       function goToNextQuestion() {
         hasSuggested = false;
