@@ -116,7 +116,7 @@
             <span id="suggestion-box"></span>
             <ul id="suggestions"></ul>
             <button onclick="submitAnswer()">Submit</button>
-            <button id="next-button">Next Question</button>
+            <button id="next-button" onclick="goToNextQuestion()">Next Question</button>
             <button id="end-quiz-button">End Quiz</button>
           </div>
           <div class="feedback-area">
@@ -125,6 +125,58 @@
             <div id="correct-answer" style="display: none"></div>
           </div>
         </div>
+              <div
+        id="transition-overlay"
+        style="
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.85);
+          z-index: 9999;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        <img
+          src="https://i.postimg.cc/Y24df0Gq/image.png"
+          alt="Transition"
+          style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
+        />
+        <br />
+        <button id="continue-btn" style="font-size: 2em; margin-top: 2em">
+          Continue
+        </button>
+      </div>
+      <div
+        id="end-transition-overlay"
+        style="
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(0, 0, 0, 0.85);
+          z-index: 9999;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        "
+      >
+        <img
+          src="https://i.postimg.cc/RZPWQ0MR/image.png"
+          alt="End Transition"
+          style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
+        />
+        <br />
+        <button id="end-continue-btn" style="font-size: 2em; margin-top: 2em">
+          Continue
+        </button>
+      </div>
       </div>
       <div class="leaderboard-container">
         <div class="leaderboard-content">
@@ -324,47 +376,7 @@
         },
       ];
 
-      // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
-      if (typeof userAnswers === 'undefined') window.userAnswers = [];
-      if (typeof currentScore === 'undefined') window.currentScore = parseInt(localStorage.getItem('currentScore') || '0');
-      if (typeof currentQuestionIndex === 'undefined') window.currentQuestionIndex = parseInt(localStorage.getItem('currentQuestionIndex') || '0');
-      if (typeof attemptCount === 'undefined') window.attemptCount = 0;
-      if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
-
-      // Add Enter key support for answer input and next question
-      const answerInput = document.getElementById("answer");
-      const nextButton = document.getElementById("next-button");
-      if (answerInput) {
-        answerInput.addEventListener("keydown", function (e) {
-          if (e.key === "Enter") {
-            if (nextButton && nextButton.style.display !== "none") {
-              goToNextQuestion();
-            } else {
-              submitAnswer();
-            }
-          }
-        });
-      }
-      if (nextButton) {
-        nextButton.addEventListener("click", goToNextQuestion);
-      }
-      // Add logout button functionality
-      const logoutBtn = document.getElementById("logout-button");
-      if (logoutBtn) {
-        logoutBtn.onclick = function () {
-          if (typeof firebase !== 'undefined' && firebase.auth) {
-            firebase.auth().signOut().then(function () {
-              localStorage.clear();
-              window.location.href = "index.html";
-            });
-          } else {
-            localStorage.clear();
-            window.location.href = "index.html";
-          }
-        };
-      }
-
-      function goToNextQuestion() {
+function goToNextQuestion() {
         hasSuggested = false;
         // Always switch to dark mode for the next question
         document.body.classList.add("dark-mode");
@@ -395,6 +407,86 @@
           // If at the end, do nothing (no redirect, no alert)
         }
       }
+
+      // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
+      if (typeof userAnswers === 'undefined') window.userAnswers = [];
+      if (typeof currentScore === 'undefined') window.currentScore = parseInt(localStorage.getItem('currentScore') || '0');
+      if (typeof currentQuestionIndex === 'undefined') window.currentQuestionIndex = parseInt(localStorage.getItem('currentQuestionIndex') || '0');
+      if (typeof attemptCount === 'undefined') window.attemptCount = 0;
+      if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
+      
+      // Add logout button functionality
+      const logoutBtn = document.getElementById("logout-button");
+      if (logoutBtn) {
+        logoutBtn.onclick = function () {
+          if (typeof firebase !== 'undefined' && firebase.auth) {
+            firebase.auth().signOut().then(function () {
+              localStorage.clear();
+              window.location.href = "index.html";
+            });
+          } else {
+            localStorage.clear();
+            window.location.href = "index.html";
+          }
+        };
+      }
+
+              // --- BEGIN: Robust submitAnswer and feedback logic (two-attempts) ---
+function submitAnswer() {
+  const answerInput = document.getElementById("answer");
+  const feedback = document.getElementById("feedback");
+  const feedbackImage = document.getElementById("feedback-image");
+  const nextButton = document.getElementById("next-button");
+  const correctAnswerDiv = document.getElementById("correct-answer");
+  const question = questions[currentQuestionIndex];
+  let userAnswer = answerInput.value.trim().toLowerCase();
+  let acceptedAnswers = Array.isArray(question.answer)
+    ? question.answer.map((a) => a.trim().toLowerCase())
+    : [question.answer.trim().toLowerCase()];
+
+  // Prevent double submit
+  if (answerInput.disabled) return;
+
+  // Check answer
+  if (acceptedAnswers.includes(userAnswer)) {
+    feedback.textContent = "✅ Correct!";
+    feedbackImage.src = question.feedbackImage || "";
+    feedbackImage.style.display = question.feedbackImage ? "block" : "none";
+    correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+    correctAnswerDiv.style.display = "block";
+    nextButton.style.display = "inline-block";
+    answerInput.disabled = true;
+    attemptCount = 0; // reset for next question
+    // Only count as correct if not already answered
+    if (!userAnswers[currentQuestionIndex]) {
+      userAnswers[currentQuestionIndex] = true;
+      currentScore = (currentScore || 0) + 1;
+      localStorage.setItem("currentScore", currentScore);
+    }
+  } else {
+    attemptCount = (typeof attemptCount === 'number' ? attemptCount : 0) + 1;
+    if (attemptCount < 2) {
+      feedback.textContent = "❌ Incorrect. Try again!";
+      feedbackImage.style.display = "none";
+      correctAnswerDiv.style.display = "none";
+      nextButton.style.display = "none";
+    } else {
+      feedback.textContent = "❌ Incorrect. The correct answer is shown below.";
+      feedbackImage.src = question.feedbackImage || "";
+      feedbackImage.style.display = question.feedbackImage ? "block" : "none";
+      correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+      correctAnswerDiv.style.display = "block";
+      nextButton.style.display = "inline-block";
+      answerInput.disabled = true;
+      // Only count as incorrect if not already answered
+      if (!userAnswers[currentQuestionIndex]) {
+        userAnswers[currentQuestionIndex] = false;
+      }
+    }
+  }
+}
+    
+
     </script>
     <script>
       // Dark mode toggle
@@ -447,7 +539,11 @@
         document.body.classList.add("dark-mode");
         localStorage.setItem("darkMode", "true");
 
-      
+        // If on the last question, go to leaderboard
+        if (currentQuestionIndex >= questions.length - 1) {
+          window.location.href = "leaderboard.html";
+          return;
+        }
 
         if (currentQuestionIndex === 2) {
           document.getElementById("quiz-container").style.display = "none";
@@ -470,35 +566,56 @@
         }
       };
 
+
       function showFeedback(isCorrect, question) {
         const feedback = document.getElementById("feedback");
         const feedbackImage = document.getElementById("feedback-image");
         const nextButton = document.getElementById("next-button");
-        const correctAnswerDiv = document.getElementById("correct-answer");
 
-        // Always show feedback text
         if (isCorrect) {
-          feedback.textContent = "✅ Correct!";
-        } else {
-          feedback.textContent = "❌ Incorrect. Try again!";
-        }
+          feedback.textContent = "✅ Correct! You found Waldo!";
+          suggestionBox.style.display = "none";
+          let answeredQuestions = JSON.parse(
+            localStorage.getItem("answeredQuestions") || "[]"
+          );
+          if (answeredQuestions.includes(currentQuestionIndex)) {
+            feedback.textContent = "You've already answered this question!";
+            return;
+          }
+          if (!answeredQuestions.includes(currentQuestionIndex)) {
+            currentScore++;
+            updateUserInfo();
+            localStorage.setItem("currentScore", currentScore);
+            answeredQuestions.push(currentQuestionIndex);
+            localStorage.setItem(
+              "answeredQuestions",
+              JSON.stringify(answeredQuestions)
+            );
+            question.answeredCorrectly = true;
+          }
+          if (question.feedbackImage) {
+            feedbackImage.src = question.feedbackImage;
+            feedbackImage.style.display = "block";
+          }
+          nextButton.style.display = "inline-block";
+          hasSuggested = false;
 
-        // Always show feedback image if available
-        if (question.feedbackImage) {
-          feedbackImage.src = question.feedbackImage;
-          feedbackImage.style.display = "block";
+          // Only transition after question #74 (index 10)
+          if (
+            currentQuestionIndex > 11 &&
+            currentQuestionIndex <= 20 && // up to and including #84
+            document.body.classList.contains("dark-mode")
+          ) {
+            transitionToLightModeWithImage(
+              "https://i.postimg.cc/L6qyHXBZ/image.png"
+            );
+          }
+          return;
         } else {
+          feedback.textContent = "Oops! That's not Waldo.";
           feedbackImage.style.display = "none";
         }
 
-        // Always show correct answers
-        const acceptedAnswers = Array.isArray(question.answer)
-          ? question.answer.map((a) => a.trim()).join(", ")
-          : question.answer;
-        correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers}`;
-        correctAnswerDiv.style.display = "block";
-
-        // Always show next button
         nextButton.style.display = "inline-block";
       }
 
@@ -553,6 +670,65 @@
           logoutBtn.style.display = "none";
         }
       });
+    </script>
+    <script>
+
+
+      // --- BEGIN: Robust submitAnswer and feedback logic (two-attempts) ---
+function submitAnswer() {
+  const answerInput = document.getElementById("answer");
+  const feedback = document.getElementById("feedback");
+  const feedbackImage = document.getElementById("feedback-image");
+  const nextButton = document.getElementById("next-button");
+  const correctAnswerDiv = document.getElementById("correct-answer");
+  const question = questions[currentQuestionIndex];
+  let userAnswer = answerInput.value.trim().toLowerCase();
+  let acceptedAnswers = Array.isArray(question.answer)
+    ? question.answer.map((a) => a.trim().toLowerCase())
+    : [question.answer.trim().toLowerCase()];
+
+  // Prevent double submit
+  if (answerInput.disabled) return;
+
+  // Check answer
+  if (acceptedAnswers.includes(userAnswer)) {
+    feedback.textContent = "✅ Correct!";
+    feedbackImage.src = question.feedbackImage || "";
+    feedbackImage.style.display = question.feedbackImage ? "block" : "none";
+    correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+    correctAnswerDiv.style.display = "block";
+    nextButton.style.display = "inline-block";
+    answerInput.disabled = true;
+    attemptCount = 0; // reset for next question
+    // Only count as correct if not already answered
+    if (!userAnswers[currentQuestionIndex]) {
+      userAnswers[currentQuestionIndex] = true;
+      currentScore = (currentScore || 0) + 1;
+      localStorage.setItem("currentScore", currentScore);
+    }
+  } else {
+    attemptCount = (typeof attemptCount === 'number' ? attemptCount : 0) + 1;
+    if (attemptCount < 2) {
+      feedback.textContent = "❌ Incorrect. Try again!";
+      feedbackImage.style.display = "none";
+      correctAnswerDiv.style.display = "none";
+      nextButton.style.display = "none";
+    } else {
+      feedback.textContent = "❌ Incorrect. The correct answer is shown below.";
+      feedbackImage.src = question.feedbackImage || "";
+      feedbackImage.style.display = question.feedbackImage ? "block" : "none";
+      correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+      correctAnswerDiv.style.display = "block";
+      nextButton.style.display = "inline-block";
+      answerInput.disabled = true;
+      // Only count as incorrect if not already answered
+      if (!userAnswers[currentQuestionIndex]) {
+        userAnswers[currentQuestionIndex] = false;
+      }
+    }
+  }
+}
+// --- END: Robust submitAnswer and feedback logic (two-attempts) ---
     </script>
   </body>
 </html>

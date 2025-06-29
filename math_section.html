@@ -288,11 +288,18 @@
       if (typeof attemptCount === 'undefined') window.attemptCount = 0;
       if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
 
-      function goToNextQuestion() {
+            function goToNextQuestion() {
         hasSuggested = false;
         currentQuestionIndex++;
+
         if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
           localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+
+          // After the quiz ends, wait for a key press to go to next section
+          alert(
+            "You finished the Warmup Section! Now taking you to the Math Section. Press OK to continue."
+          );
           document.addEventListener(
             "keydown",
             function () {
@@ -301,25 +308,27 @@
             { once: true }
           );
         } else {
-          loadQuestion();
+          // Save and load the next question
+          loadQuestion(); // loadQuestion already saves currentQuestionIndex
         }
       }
 
-      function submitAnswer() {
+function submitAnswer() {
         const answerInput = document.getElementById("answer");
-        const userAnswer = answerInput.value.trim().toLowerCase();
+        const userAnswer = answerInput.value.trim();
         const question = questions[currentQuestionIndex];
         const feedback = document.getElementById("feedback");
         const feedbackImage = document.getElementById("feedback-image");
         const nextButton = document.getElementById("next-button");
         const correctAnswerDiv = document.getElementById("correct-answer");
-        const suggestionBox = document.getElementById("suggestion-box");
 
         feedback.innerHTML = "";
         feedbackImage.style.display = "none";
         correctAnswerDiv.style.display = "none";
 
         if (question.type === "click") return;
+
+        // === Lettuce easter egg ===
 
         // Special logic for question 24 (index 5 in your math_section.html)
         if (
@@ -334,6 +343,7 @@
             correctAnswerDiv.textContent = "Correct answer(s): brady, geometry";
             correctAnswerDiv.style.display = "block";
             suggestionBox.style.display = "none";
+            // Prevent infinite score abuse
             let answeredQuestions = JSON.parse(
               localStorage.getItem("answeredQuestions") || "[]"
             );
@@ -356,18 +366,22 @@
             hasSuggested = false;
           } else if (hasBrady || hasGeometry) {
             feedback.textContent = "Almost... (missing something...)";
-            correctAnswerDiv.style.display = "none";
+            correctAnswerDiv.style.display = "none"; // Don't show correct answer yet
             suggestionBox.style.display = "none";
             nextButton.style.display = "none";
-            feedbackImage.src = "https://i.postimg.cc/LsZ7Xd09/image.png";
+            // Show a special image for "Almost..."
+            feedbackImage.src = "https://i.postimg.cc/LsZ7Xd09/image.png"; // <-- your chosen "almost" image
             feedbackImage.style.display = "block";
           } else {
-            attemptCount = (typeof attemptCount === "number" ? attemptCount : 0) + 1;
+            attemptCount =
+              (typeof attemptCount === "number" ? attemptCount : 0) + 1;
             if (attemptCount >= 2) {
               feedback.textContent = "❌ Incorrect.";
-              correctAnswerDiv.textContent = "Correct answer(s): brady, geometry";
+              correctAnswerDiv.textContent =
+                "Correct answer(s): brady, geometry";
               correctAnswerDiv.style.display = "block";
               nextButton.style.display = "inline-block";
+              // Show the feedback image from the questions array if available
               if (question.feedbackImage) {
                 feedbackImage.src = question.feedbackImage;
                 feedbackImage.style.display = "block";
@@ -410,6 +424,8 @@
             questionType: "text",
           });
           question.loggedAnswer = true;
+
+          // 💾 Save to localStorage
           localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
         }
 
@@ -417,6 +433,8 @@
         if (isCorrect) {
           feedback.textContent = "✅ Correct!";
           suggestionBox.style.display = "none";
+
+          // Prevent infinite score abuse
           let answeredQuestions = JSON.parse(
             localStorage.getItem("answeredQuestions") || "[]"
           );
@@ -431,22 +449,32 @@
             );
             question.answeredCorrectly = true;
           }
+
           if (question.feedbackImage) {
             feedbackImage.src = question.feedbackImage;
             feedbackImage.style.display = "block";
           }
-          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+
+          // Always show correct answer(s)
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
+            ", "
+          )}`;
           correctAnswerDiv.style.display = "block";
+
           nextButton.style.display = "inline-block";
           hasSuggested = false;
         } else {
-          attemptCount = (typeof attemptCount === "number" ? attemptCount : 0) + 1;
+          attemptCount++;
           if (attemptCount >= 2) {
             feedback.textContent = "❌ Incorrect.";
             suggestionBox.style.display = "none";
-            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
+              ", "
+            )}`;
             correctAnswerDiv.style.display = "block";
             nextButton.style.display = "inline-block";
+
             if (question.feedbackImage) {
               feedbackImage.src = question.feedbackImage;
               feedbackImage.style.display = "block";
@@ -455,26 +483,18 @@
             feedback.textContent = "❌ Incorrect. Try again!";
           }
         }
-      }
-
-      // Add Enter key support for answer input and next question
-      const answerInput = document.getElementById("answer");
-      const nextButton = document.getElementById("next-button");
       if (answerInput) {
         answerInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") {
-            // If next button is visible, go to next question, else submit
-            if (nextButton && nextButton.style.display !== "none") {
+            // Only submit answer if feedback is NOT showing (i.e., Next button is hidden)
+            if (nextButton && nextButton.style.display === "block") {
               goToNextQuestion();
-            } else {
-              submitAnswer();
             }
           }
         });
       }
-      if (nextButton) {
-        nextButton.addEventListener("click", goToNextQuestion);
       }
+
 
       // End Quiz button logic
       const endQuizBtn = document.getElementById("end-quiz-button");

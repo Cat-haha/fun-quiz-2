@@ -89,6 +89,7 @@
             <button id="next-button" onclick="goToNextQuestion()">
               Next Question
             </button>
+    <button id="end-quiz-btn" style="display: block" onclick="endQuiz()">End Quiz</button>
           </div>
           <div class="feedback-area">
             <div id="feedback"></div>
@@ -112,7 +113,6 @@
         </div>
       </div>
     </div>
-    <button id="end-quiz-btn" style="display: block" onclick="endQuiz()">End Quiz</button>
     <script src="custom.js"></script>
     <script src="script.js"></script>
     <script>
@@ -215,7 +215,18 @@
         },
         {
           question: "#61. What's This? (phrase)",
-          answer: ["U R full of below knee", "you are full of bologna"],
+          answer: [
+            "U R full of below knee",
+            "you are full of bologna",
+            "you are full of below knee",
+            "u r full of bologna",
+            "ur full of below knee",
+            "ur full of bologna",
+            "you're full of bologna",
+            "you're full of below knee",
+            "youre full of bologna",
+            "youre full of below knee",
+          ],
           image: "https://i.postimg.cc/L5R0NNBj/image.png",
           feedbackImage: "",
         },
@@ -232,6 +243,31 @@
           feedbackImage: "",
         },
       ];
+
+            function goToNextQuestion() {
+        hasSuggested = false;
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+
+          // After the quiz ends, wait for a key press to go to next section
+          alert(
+            "You finished the Brain Teasers Section! Now taking you to the Colors Section. Press OK to continue."
+          );
+          document.addEventListener(
+            "keydown",
+            function () {
+              window.location.href = "colors_section.html";
+            },
+            { once: true }
+          );
+        } else {
+          // Save and load the next question
+          loadQuestion(); // loadQuestion already saves currentQuestionIndex
+        }
+      }
 
       // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
       if (typeof userAnswers === 'undefined') window.userAnswers = [];
@@ -253,9 +289,6 @@
             }
           }
         });
-      }
-      if (nextButton) {
-        nextButton.addEventListener("click", goToNextQuestion);
       }
       // Add logout button functionality
       const logoutBtn = document.getElementById("logout-button");
@@ -305,6 +338,107 @@
             }
           }
         };
+      }
+
+
+      function submitAnswer() {
+        const answerInput = document.getElementById("answer");
+        const userAnswer = answerInput.value.trim();
+        if (!userAnswer) {
+          answerInput.focus();
+          return; // Prevent submission if input is empty
+        }
+        const question = questions[currentQuestionIndex];
+        const feedback = document.getElementById("feedback");
+        const feedbackImage = document.getElementById("feedback-image");
+        const nextButton = document.getElementById("next-button");
+        const correctAnswerDiv = document.getElementById("correct-answer");
+        const suggestionBox = document.getElementById("suggestion-box");
+
+        feedback.innerHTML = "";
+        feedbackImage.style.display = "none";
+        correctAnswerDiv.style.display = "none";
+
+        // Standard answer checking for all questions
+        const acceptedAnswers = Array.isArray(question.answer)
+          ? question.answer.map((a) => a.trim().toLowerCase())
+          : [question.answer.trim().toLowerCase()];
+
+        const isCorrect = acceptedAnswers.includes(userAnswer.trim().toLowerCase());
+
+        // Log answer only once
+        if (!question.loggedAnswer) {
+          if (typeof userAnswers === 'undefined') window.userAnswers = [];
+          userAnswers.push({
+            questionIndex: currentQuestionIndex,
+            questionText: question.question,
+            userAnswer: userAnswer,
+            acceptedAnswers,
+            isCorrect,
+            questionType: "text",
+          });
+          question.loggedAnswer = true;
+          localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+        }
+
+        // Ensure answeredQuestions is always an array
+        let answeredQuestions = [];
+        try {
+          answeredQuestions = JSON.parse(localStorage.getItem("answeredQuestions")) || [];
+          if (!Array.isArray(answeredQuestions)) answeredQuestions = [];
+        } catch (e) {
+          answeredQuestions = [];
+        }
+
+        // Show feedback
+        if (isCorrect) {
+          feedback.textContent = "✅ Correct!";
+          suggestionBox.style.display = "none";
+          // Only increment score if this question hasn't been answered before
+          if (!answeredQuestions.includes(currentQuestionIndex)) {
+            if (typeof currentScore === 'undefined') window.currentScore = 0;
+            currentScore++;
+            if (typeof updateUserInfo === 'function') updateUserInfo();
+            localStorage.setItem("currentScore", currentScore);
+            answeredQuestions.push(currentQuestionIndex);
+            localStorage.setItem(
+              "answeredQuestions",
+              JSON.stringify(answeredQuestions)
+            );
+            question.answeredCorrectly = true;
+          }
+          // Always show correct answer(s)
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+          correctAnswerDiv.style.display = "block";
+          if (question.feedbackImage) {
+            feedbackImage.src = question.feedbackImage;
+            feedbackImage.style.display = "block";
+          }
+          nextButton.style.display = "inline-block";
+          hasSuggested = false;
+          // Reset attemptCount for next question
+          attemptCount = 0;
+        } else {
+          attemptCount = typeof attemptCount === "undefined" ? 1 : attemptCount + 1;
+          if (attemptCount >= 2) {
+            feedback.textContent = "❌ Incorrect.";
+            suggestionBox.style.display = "none";
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+            correctAnswerDiv.style.display = "block";
+            nextButton.style.display = "inline-block";
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+            // Reset attemptCount for next question
+            attemptCount = 0;
+          } else {
+            feedback.textContent = "❌ Incorrect. Try again!";
+            // Hide feedback image and correct answer until second attempt
+            correctAnswerDiv.style.display = "none";
+            feedbackImage.style.display = "none";
+          }
+        }
       }
     </script>
   </body>

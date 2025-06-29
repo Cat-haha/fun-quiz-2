@@ -55,7 +55,6 @@ body.dark-mode .body-container {
   box-shadow: inset 0 0 20px #181c24, 5px 5px 0 #5f2a7e;
 }
 
-#start-form,
 .leaderboard-container {
   flex: 1;
   padding: 20px;
@@ -64,7 +63,6 @@ body.dark-mode .body-container {
   overflow-y: auto;
 }
 
-body.dark-mode #start-form,
 body.dark-mode .leaderboard-container {
   background-color: #20243a;
   border-right: 3px dashed #393e6e;
@@ -272,7 +270,7 @@ body.dark-mode #leaderboard-table td:first-child {
     max-width: 95vw;
     border-width: 2px;
   }
-  .body-container, .quiz-ui, #start-form, #quiz-container {
+  .body-container, .quiz-ui, #quiz-container {
     flex-direction: column !important;
     width: 100vw;
     max-width: 100vw;

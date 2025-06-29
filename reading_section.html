@@ -52,45 +52,6 @@
     <button id="logout-button" style="display: none">Logout</button>
     <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
     <p id="user-info"></p>
-    <script>
-      // Show user info from localStorage immediately for seamless experience
-      document.addEventListener("DOMContentLoaded", function () {
-        const userInfo = document.getElementById("user-info");
-        const quizContainer = document.getElementById("quiz-container");
-        const leaderboard = document.querySelector(".leaderboard-container");
-        const signInBtn = document.getElementById("google-signin-btn");
-        const logoutBtn = document.getElementById("logout-button");
-        const playerName = localStorage.getItem("playerName");
-        const playerEmail = localStorage.getItem("playerEmail");
-        if (playerName && playerEmail) {
-          userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail}`;
-          if (quizContainer) quizContainer.style.display = "block";
-          if (leaderboard) leaderboard.style.display = "block";
-          signInBtn.style.display = "none";
-          logoutBtn.style.display = "inline-block";
-          // Show first question if logged in and quiz UI is visible
-          if (typeof callLoadQuestionWhenReady === 'function') {
-            callLoadQuestionWhenReady();
-          } else if (typeof loadQuestion === 'function') {
-            loadQuestion();
-          }
-        }
-      });
-      function signInWithGoogle() {
-        var provider = new firebase.auth.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        firebase.auth().signInWithPopup(provider);
-      }
-
-      // Helper to wait for loadQuestion and call it after login
-      function callLoadQuestionWhenReady() {
-        if (typeof loadQuestion === "function") {
-          loadQuestion();
-        } else {
-          setTimeout(callLoadQuestionWhenReady, 50);
-        }
-      }
-    </script>
     <div class="body-container">
       <div id="quiz-container" style="display: none">
         <marquee class="marqueeH1" direction="right">
@@ -156,6 +117,75 @@
       </div>
     </div>
     <button id="end-quiz-btn" style="display: block" onclick="endQuiz()">End Quiz</button>
+    <script src="custom.js"></script>
+    <script src="script.js"></script>
+        <script>
+            // Google Auth UI logic
+      document.addEventListener("DOMContentLoaded", function () {
+        firebase.auth().onAuthStateChanged(function(user) {
+          const quizContainer = document.getElementById("quiz-container");
+          const leaderboard = document.querySelector(".leaderboard-container");
+          const userInfo = document.getElementById("user-info");
+          const signInBtn = document.getElementById("google-signin-btn");
+          const logoutBtn = document.getElementById("logout-button");
+          if (user) {
+            // Save user info to localStorage for consistency
+            localStorage.setItem("playerName", user.displayName);
+            localStorage.setItem("playerEmail", user.email);
+            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email} Score: ${localStorage.getItem("currentScore") || 0}`;
+            quizContainer.style.display = "block";
+            leaderboard.style.display = "block";
+            signInBtn.style.display = "none";
+            logoutBtn.style.display = "inline-block";
+          } else {
+            userInfo.textContent = "";
+            quizContainer.style.display = "none";
+            leaderboard.style.display = "none";
+            signInBtn.style.display = "inline-block";
+            logoutBtn.style.display = "none";
+          }
+        });
+        // Attach logout handler robustly
+        function attachLogoutHandler() {
+          var btn = document.getElementById("logout-button");
+          if (btn && !btn._logoutHandlerAttached) {
+            btn.onclick = function () {
+              firebase.auth().signOut();
+            };
+            btn._logoutHandlerAttached = true;
+          }
+        }
+        attachLogoutHandler();
+        new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
+      });
+      document.addEventListener("DOMContentLoaded", function () {
+        const userInfo = document.getElementById("user-info");
+        const quizContainer = document.getElementById("quiz-container");
+        const leaderboard = document.querySelector(".leaderboard-container");
+        const signInBtn = document.getElementById("google-signin-btn");
+        const logoutBtn = document.getElementById("logout-button");
+        const playerName = localStorage.getItem("playerName");
+        const playerEmail = localStorage.getItem("playerEmail");
+        if (playerName && playerEmail) {
+          userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail}`;
+          if (quizContainer) quizContainer.style.display = "block";
+          if (leaderboard) leaderboard.style.display = "block";
+          signInBtn.style.display = "none";
+          logoutBtn.style.display = "inline-block";
+          // Show first question if logged in and quiz UI is visible
+          if (typeof callLoadQuestionWhenReady === 'function') {
+            callLoadQuestionWhenReady();
+          } else if (typeof loadQuestion === 'function') {
+            loadQuestion();
+          }
+        }
+      });
+      function signInWithGoogle() {
+        var provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' }); // Always prompt account selection
+        firebase.auth().signInWithPopup(provider);
+      }
+    </script>
     <script>
       var questions = [
         {
@@ -253,6 +283,10 @@
             "idk",
             "i don't know",
             "we don't know",
+            "unknown",
+            "not enough information",
+            "nan",
+            "nei"
           ],
           image: "",
           feedbackImage: "https://i.postimg.cc/zv4WHbyY/image.png",
@@ -287,6 +321,8 @@
         },
       ];
 
+
+      
       // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
       if (typeof userAnswers === 'undefined') window.userAnswers = [];
       if (typeof currentScore === 'undefined') window.currentScore = parseInt(localStorage.getItem('currentScore') || '0');
@@ -300,16 +336,12 @@
       if (answerInput) {
         answerInput.addEventListener("keydown", function (e) {
           if (e.key === "Enter") {
-            if (nextButton && nextButton.style.display !== "none") {
-              goToNextQuestion();
-            } else {
+            // Only submit answer if feedback is NOT showing (i.e., Next button is hidden)
+            if (nextButton && nextButton.style.display === "none") {
               submitAnswer();
             }
           }
         });
-      }
-      if (nextButton) {
-        nextButton.addEventListener("click", goToNextQuestion);
       }
       // Add logout button functionality
       const logoutBtn = document.getElementById("logout-button");
@@ -342,22 +374,53 @@
       if (localStorage.getItem("darkMode") === "true") {
         document.body.classList.add("dark-mode");
       }
+
+            function goToNextQuestion() {
+        hasSuggested = false;
+        currentQuestionIndex += 1;
+        localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+
+        if (currentQuestionIndex >= questions.length) {
+          // Save the index before ending the quiz
+          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+
+          // After the quiz ends, wait for a key press to go to next section
+          alert(
+            "You finished the Reading Section! Now taking you to the Brain Teasers Section. Press OK to continue."
+          );
+          document.addEventListener(
+            "keydown",
+            function () {
+              window.location.href = "brain_teasers.html";
+            },
+            { once: true }
+          );
+        } else {
+          // Only load the next question, do not increment index again
+          loadQuestion();
+        }
+      }
     </script>
     <script>
       function submitAnswer() {
-        const answerInput = document.getElementById("answer");
-        const userAnswer = answerInput.value.trim().toLowerCase();
-        const question = questions[currentQuestionIndex];
-        const feedback = document.getElementById("feedback");
-        const feedbackImage = document.getElementById("feedback-image");
-        const nextButton = document.getElementById("next-button");
-        const correctAnswerDiv = document.getElementById("correct-answer");
+  const answerInput = document.getElementById("answer");
+  const userAnswer = answerInput.value.trim();
+  if (!userAnswer) {
+    answerInput.focus();
+    return; // Prevent submission if input is empty
+  }
+  const question = questions[currentQuestionIndex];
+  const feedback = document.getElementById("feedback");
+  const feedbackImage = document.getElementById("feedback-image");
+  const nextButton = document.getElementById("next-button");
+  const correctAnswerDiv = document.getElementById("correct-answer");
+  const suggestionBox = document.getElementById("suggestion-box");
 
-        feedback.innerHTML = "";
-        feedbackImage.style.display = "none";
-        correctAnswerDiv.style.display = "none";
+  feedback.innerHTML = "";
+  feedbackImage.style.display = "none";
+  correctAnswerDiv.style.display = "none";
 
-        // Example: If your "Little John" question is at index 13 (adjust as needed)
+// Example: If your "Little John" question is at index 13 (adjust as needed)
         if (
           question.question &&
           question.question.includes(
@@ -381,102 +444,86 @@
           }
         }
 
-        const acceptedAnswers = Array.isArray(question.answer)
-          ? question.answer.map((a) => a.trim().toLowerCase())
-          : [question.answer.trim().toLowerCase()];
+  // Standard answer checking for all questions
+  const acceptedAnswers = Array.isArray(question.answer)
+    ? question.answer.map((a) => a.trim().toLowerCase())
+    : [question.answer.trim().toLowerCase()];
 
-        const isCorrect = acceptedAnswers.includes(userAnswer.toLowerCase());
+  const isCorrect = acceptedAnswers.includes(userAnswer.trim().toLowerCase());
 
-        // === Log answer only once ===
-        if (!question.loggedAnswer) {
-          userAnswers.push({
-            questionIndex: currentQuestionIndex,
-            questionText: question.question,
-            userAnswer: userAnswer,
-            acceptedAnswers,
-            isCorrect,
-            questionType: "text",
-          });
-          question.loggedAnswer = true;
+  // Log answer only once
+  if (!question.loggedAnswer) {
+    userAnswers.push({
+      questionIndex: currentQuestionIndex,
+      questionText: question.question,
+      userAnswer: userAnswer,
+      acceptedAnswers,
+      isCorrect,
+      questionType: "text",
+    });
+    question.loggedAnswer = true;
+    localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+  }
 
-          // 💾 Save to localStorage
-          localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-        }
+  // Ensure answeredQuestions is always an array
+  let answeredQuestions = [];
+  try {
+    answeredQuestions = JSON.parse(localStorage.getItem("answeredQuestions")) || [];
+    if (!Array.isArray(answeredQuestions)) answeredQuestions = [];
+  } catch (e) {
+    answeredQuestions = [];
+  }
 
-        // === Show feedback ===
-        if (isCorrect) {
-          feedback.textContent = "✅ Correct!";
-          suggestionBox.style.display = "none";
-
-          // Prevent infinite score abuse
-          let answeredQuestions = JSON.parse(
-            localStorage.getItem("answeredQuestions") || "[]"
-          );
-          if (!answeredQuestions.includes(currentQuestionIndex)) {
-            currentScore++;
-            updateUserInfo();
-            localStorage.setItem("currentScore", currentScore);
-            answeredQuestions.push(currentQuestionIndex);
-            localStorage.setItem(
-              "answeredQuestions",
-              JSON.stringify(answeredQuestions)
-            );
-            question.answeredCorrectly = true;
-          }
-
-          if (question.feedbackImage) {
-            feedbackImage.src = question.feedbackImage;
-            feedbackImage.style.display = "block";
-          }
-
-          // Always show correct answer(s)
-          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
-            ", "
-          )}`;
-          correctAnswerDiv.style.display = "block";
-
-          nextButton.style.display = "inline-block";
-          hasSuggested = false;
-        } else {
-          attemptCount++;
-          if (attemptCount >= 2) {
-            feedback.textContent = "❌ Incorrect.";
-            suggestionBox.style.display = "none";
-
-            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(
-              ", "
-            )}`;
-            correctAnswerDiv.style.display = "block";
-            nextButton.style.display = "inline-block";
-
-            if (question.feedbackImage) {
-              feedbackImage.src = question.feedbackImage;
-              feedbackImage.style.display = "block";
-            }
-          } else {
-            feedback.textContent = "❌ Incorrect. Try again!";
-          }
-        }
+  // Show feedback
+  if (isCorrect) {
+    feedback.textContent = "✅ Correct!";
+    suggestionBox.style.display = "none";
+    // Only increment score if this question hasn't been answered before
+    if (!answeredQuestions.includes(currentQuestionIndex)) {
+      currentScore++;
+      updateUserInfo();
+      localStorage.setItem("currentScore", currentScore);
+      answeredQuestions.push(currentQuestionIndex);
+      localStorage.setItem(
+        "answeredQuestions",
+        JSON.stringify(answeredQuestions)
+      );
+      question.answeredCorrectly = true;
+    }
+    // Always show correct answer(s)
+    correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+    correctAnswerDiv.style.display = "block";
+    if (question.feedbackImage) {
+      feedbackImage.src = question.feedbackImage;
+      feedbackImage.style.display = "block";
+    }
+    nextButton.style.display = "inline-block";
+    hasSuggested = false;
+    // Reset attemptCount for next question
+    attemptCount = 0;
+  } else {
+    attemptCount = typeof attemptCount === "undefined" ? 1 : attemptCount + 1;
+    if (attemptCount >= 3) {
+      feedback.textContent = "❌ Incorrect.";
+      suggestionBox.style.display = "none";
+      correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+      correctAnswerDiv.style.display = "block";
+      nextButton.style.display = "inline-block";
+      if (question.feedbackImage) {
+        feedbackImage.src = question.feedbackImage;
+        feedbackImage.style.display = "block";
       }
-    </script>
-    <script>
-      // End Quiz button logic
-      const endQuizBtn = document.getElementById("end-quiz-button");
-      if (endQuizBtn) {
-        endQuizBtn.onclick = function () {
-          if (confirm("Are you sure you want to end the quiz? You will be logged out and returned to the start.")) {
-            if (typeof firebase !== 'undefined' && firebase.auth) {
-              firebase.auth().signOut().then(function () {
-                localStorage.clear();
-                window.location.href = "index.html";
-              });
-            } else {
-              localStorage.clear();
-              window.location.href = "index.html";
-            }
-          }
-        };
+      // Reset attemptCount for next question
+      attemptCount = 0;
+    } else {
+      feedback.textContent = "❌ Incorrect. Try again!";
+      // Hide feedback image and correct answer until second attempt
+      correctAnswerDiv.style.display = "none";
+      feedbackImage.style.display = "none";
+    }
+  }
       }
+    
     </script>
   </body>
 </html>

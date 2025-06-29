@@ -72,6 +72,7 @@
           numbers being out of order... this is based off of Ethan's quiz, not
           my information.
         </p>
+        <a href="reading_section.html">reading section</a>
         <div id="progress" style="margin-bottom: 10px; display: none"></div>
         <br /><br />
         <!-- Quiz UI starts here -->
@@ -132,7 +133,7 @@
             // Save user info to localStorage for consistency
             localStorage.setItem("playerName", user.displayName);
             localStorage.setItem("playerEmail", user.email);
-            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email}`;
+            userInfo.textContent = `Logged in as: ${user.displayName} || Email: ${user.email} Score: ${localStorage.getItem("currentScore") || 0}`;
             quizContainer.style.display = "block";
             leaderboard.style.display = "block";
             signInBtn.style.display = "none";
@@ -334,7 +335,7 @@
         },
       ];
 
-            function goToNextQuestion() {
+      function goToNextQuestion() {
         hasSuggested = false;
         currentQuestionIndex++;
 
@@ -554,7 +555,6 @@
           // Always show correct answer(s)
           correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
           correctAnswerDiv.style.display = "block";
-
           if (question.feedbackImage) {
             feedbackImage.src = question.feedbackImage;
             feedbackImage.style.display = "block";
