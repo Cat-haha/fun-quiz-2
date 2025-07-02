@@ -387,16 +387,6 @@ function submitAnswer() {
     nextButton.style.display = "inline-block";
     hasSuggested = false;
 
-    // Only transition for #75 and after, and only after correct answer
-    if (
-      currentQuestionIndex >= colorsSection75Index &&
-      document.body.classList.contains("dark-mode")
-    ) {
-      let transitionImg = transitionImages[currentQuestionIndex] || "";
-      if (transitionImg) {
-        transitionToLightModeWithImage(transitionImg);
-      }
-    }
     return;
   } else {
     attemptCount++;
@@ -412,16 +402,6 @@ function submitAnswer() {
         feedbackImage.style.display = "block";
       }
 
-      // Only transition for #75 and after, and only after 2 incorrect attempts
-      if (
-        currentQuestionIndex >= colorsSection75Index &&
-        document.body.classList.contains("dark-mode")
-      ) {
-        let transitionImg = transitionImages[currentQuestionIndex] || "";
-        if (transitionImg) {
-          transitionToLightModeWithImage(transitionImg);
-        }
-      }
       return;
     } else {
       feedback.textContent = "❌ Incorrect. Try again!";
@@ -661,9 +641,6 @@ document.getElementById("continue-btn").onclick = function () {
 document.getElementById("end-continue-btn").onclick = function () {
   document.getElementById("end-transition-overlay").style.display = "none";
   document.getElementById("quiz-container").style.display = "";
-  // Switch to dark mode
-  document.body.classList.add("dark-mode");
-  localStorage.setItem("darkMode", "true");
   currentQuestionIndex++;
   localStorage.setItem("colorsSectionCurrentQuestionIndex", currentQuestionIndex);
   loadQuestion();
@@ -698,28 +675,6 @@ function goToNextQuestion() {
   document.getElementById("feedback-image").style.display = "none";
   document.getElementById("next-button").style.display = "none";
   document.getElementById("correct-answer").style.display = "none";
-
-  // Overlay transition for #75 and up (index 11+)
-  if (
-    typeof colorsSection75Index !== 'undefined' &&
-    currentQuestionIndex >= colorsSection75Index &&
-    document.body.classList.contains("dark-mode")
-  ) {
-    let transitionImg = transitionImages[currentQuestionIndex] || "";
-    if (transitionImg) {
-      // Show overlay with transition image and continue button
-      const overlay = document.getElementById("transition-overlay");
-      const overlayImg = document.getElementById("transition-image");
-      overlayImg.src = transitionImg;
-      overlay.style.display = "flex";
-      overlay.style.opacity = 1;
-      overlay.style.zIndex = 9999;
-      overlay.style.pointerEvents = "auto";
-      document.getElementById("quiz-container").style.display = "none";
-      // Do not advance question index or call loadQuestion() until continue is pressed
-      return;
-    }
-  }
 
   currentQuestionIndex++;
   localStorage.setItem("colorsSectionCurrentQuestionIndex", currentQuestionIndex);
