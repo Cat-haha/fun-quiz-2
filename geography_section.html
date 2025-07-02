@@ -35,6 +35,8 @@
     <button id="google-signin-btn" onclick="signInWithGoogle()">
       Sign in with Google
     </button>
+    <button onclick="goBackAnIndex()">go back a question</button>
+    <button onclick="goForwardAnIndex()">go forward a question</button>
     <p id="user-info"></p>
     <div class="body-container">
       <div id="quiz-container" style="display: none">
@@ -241,6 +243,8 @@
         },
       ];
 
+
+      
       // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
       if (typeof userAnswers === 'undefined') window.userAnswers = [];
       if (typeof currentScore === 'undefined') window.currentScore = parseInt(localStorage.getItem('currentScore') || '0');
@@ -248,20 +252,24 @@
       if (typeof attemptCount === 'undefined') window.attemptCount = 0;
       if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
 
-      // Add Enter key support for answer input and next question
-      const answerInput = document.getElementById("answer");
-      const nextButton = document.getElementById("next-button");
-      if (answerInput) {
-        answerInput.addEventListener("keydown", function (e) {
-          if (e.key === "Enter") {
-            if (nextButton && nextButton.style.display !== "none") {
-              goToNextQuestion();
-            } else {
-              submitAnswer();
+      // Add Enter key support for answer input and next question (robust, no auto-advance)
+      document.addEventListener("DOMContentLoaded", function () {
+        var answerInput = document.getElementById("answer");
+        var nextButton = document.getElementById("next-button");
+        var feedback = document.getElementById("feedback");
+        var feedbackVisible = false;
+        if (answerInput) {
+          answerInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              if (nextButton.style.display === "inline-block" || nextButton.style.display === "block") {
+                goToNextQuestion();
+              } else {
+                submitAnswer();
+              }
             }
-          }
-        });
-      }
+          });
+        }
+      });
       if (nextButton) {
         nextButton.addEventListener("click", goToNextQuestion);
       }
@@ -383,22 +391,81 @@
     <!-- Add End Quiz button -->
     <button id="end-quiz-btn" style="display: block" onclick="endQuiz()">End Quiz</button>
     <script>
-      // End Quiz button logic
-      const endQuizBtn = document.getElementById("end-quiz-btn");
-      if (endQuizBtn) {
-        endQuizBtn.onclick = function () {
-          if (confirm("Are you sure you want to end the quiz? You will be logged out and returned to the start.")) {
-            if (typeof firebase !== 'undefined' && firebase.auth) {
-              firebase.auth().signOut().then(function () {
-                localStorage.clear();
-                window.location.href = "index.html";
-              });
-            } else {
-              localStorage.clear();
-              window.location.href = "index.html";
-            }
+      // Replace submitAnswer logic to match reading section style
+      function submitAnswer() {
+        const answerInput = document.getElementById("answer");
+        const userAnswer = answerInput.value.trim();
+        const question = questions[currentQuestionIndex];
+        const feedback = document.getElementById("feedback");
+        const feedbackImage = document.getElementById("feedback-image");
+        const nextButton = document.getElementById("next-button");
+        const correctAnswerDiv = document.getElementById("correct-answer");
+
+        feedback.innerHTML = "";
+        feedbackImage.style.display = "none";
+        correctAnswerDiv.style.display = "none";
+
+        const acceptedAnswers = Array.isArray(question.answer)
+          ? question.answer.map((a) => a.trim().toLowerCase())
+          : [question.answer.trim().toLowerCase()];
+
+        const isCorrect = acceptedAnswers.some(ans => userAnswer.toLowerCase().includes(ans));
+
+        // === Log answer only once ===
+        if (!question.loggedAnswer) {
+          userAnswers.push({
+            questionIndex: currentQuestionIndex,
+            questionText: question.question,
+            userAnswer: userAnswer,
+            acceptedAnswers,
+            isCorrect,
+            questionType: "text"
+          });
+          question.loggedAnswer = true;
+          localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+        }
+
+        // === Show feedback ===
+        if (isCorrect) {
+          feedback.textContent = "✅ Correct!";
+          let answeredQuestions = JSON.parse(
+            localStorage.getItem("answeredQuestions") || "[]"
+          );
+          if (!answeredQuestions.includes(currentQuestionIndex)) {
+            currentScore++;
+            localStorage.setItem("currentScore", currentScore);
+            answeredQuestions.push(currentQuestionIndex);
+            localStorage.setItem(
+              "answeredQuestions",
+              JSON.stringify(answeredQuestions)
+            );
+            question.answeredCorrectly = true;
           }
-        };
+          if (question.feedbackImage) {
+            feedbackImage.src = question.feedbackImage;
+            feedbackImage.style.display = "block";
+          }
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+          correctAnswerDiv.style.display = "block";
+          nextButton.style.display = "inline-block";
+          // Do NOT call goToNextQuestion or increment index here
+          return;
+        } else {
+          attemptCount++;
+          if (attemptCount >= 2) {
+            feedback.textContent = "❌ Incorrect.";
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+            correctAnswerDiv.style.display = "block";
+            nextButton.style.display = "inline-block";
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+            return;
+          } else {
+            feedback.textContent = "❌ Incorrect. Try again!";
+          }
+        }
       }
     </script>
   </body>
