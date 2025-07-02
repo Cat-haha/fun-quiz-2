@@ -33,6 +33,26 @@
       * {
         cursor: url(https://cur.cursors-4u.net/cursors/cur-2/cur116.cur), auto !important;
       }
+      body.dark-mode {
+        background: linear-gradient(to right, #181c24, #232946);
+        color: #f4d35e;
+      }
+      body.dark-mode h1, body.dark-mode h2 {
+        color: #f4d35e;
+        text-shadow: 2px 2px #393e6e;
+      }
+      body.dark-mode a {
+        color: #00b4d8;
+      }
+      body.dark-mode .body-container {
+        background-color: #232946;
+        border-color: #393e6e;
+        box-shadow: inset 0 0 20px #181c24, 5px 5px 0 #5f2a7e;
+      }
+      body.dark-mode .leaderboard-container {
+        background-color: #20243a;
+        border-right: 3px dashed #393e6e;
+      }
       body.dark-mode #quiz-container {
         background: #232946 !important;
         color: #f4d35e !important;
@@ -42,7 +62,7 @@
       body.dark-mode .quiz-ui input,
       body.dark-mode .quiz-ui textarea {
         background: #181c24;
-        color: #f4d35e;
+        color: black;
         border: 2px solid #393e6e;
       }
       body.dark-mode .quiz-ui button {
@@ -54,6 +74,32 @@
       body.dark-mode .quiz-ui button:hover {
         background: linear-gradient(145deg, #393e6e, #00b4d8);
         box-shadow: 1px 1px 0 #181c24;
+      }
+      body.dark-mode #feedback {
+        color: #f4d35e;
+      }
+      body.dark-mode #feedback-image {
+        border: 3px outset #5f2a7e;
+      }
+      body.dark-mode #correct-answer {
+        background-color: #233d4d;
+        border-color: #00b894;
+        color: #e0e6f8;
+      }
+      body.dark-mode #suggestions {
+        background-color: #232946;
+        color: #f4d35e;
+        border-color: #5f2a7e;
+      }
+      body.dark-mode #suggestions li {
+        border-bottom: 1px dotted #5f2a7e;
+      }
+      body.dark-mode #suggestions li:hover {
+        background-color: #393e6e;
+      }
+      body.dark-mode #leaderboard-table th:first-child,
+      body.dark-mode #leaderboard-table td:first-child {
+        border-right: 2px solid #393e6e;
       }
     </style>
     <a
@@ -89,7 +135,7 @@
     <button onclick="goForwardAnIndex()">go forward a question</button>
     <div class="body-container">
       <!-- Removed old start-form login -->
-      <div id="quiz-container" style="display: none">
+      <div id="quiz-container" style="display: block">
         <marquee class="marqueeH1" direction="right">
           <h1>FUN QUIZ COLORS SECTION !!!</h1>
         </marquee>
@@ -101,11 +147,9 @@
           numbers being out of order... this is based off of Ethan's quiz, not
           my information.
         </p>
-
         <div id="progress" style="margin-bottom: 10px; display: none"></div>
         <br /><br />
         <!-- Quiz UI starts here -->
-
         <div class="quiz-ui">
           <div id="question-area">
             <div id="question">Loading...</div>
@@ -128,58 +172,58 @@
             <div id="correct-answer" style="display: none"></div>
           </div>
         </div>
-              <div
-        id="transition-overlay"
-        style="
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(0, 0, 0, 0.85);
-          z-index: 9999;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        "
-      >
-        <img
-          src="https://i.postimg.cc/Y24df0Gq/image.png"
-          alt="Transition"
-          style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
-        />
-        <br />
-        <button id="continue-btn" style="font-size: 2em; margin-top: 2em">
-          Continue
-        </button>
-      </div>
-      <div
-        id="end-transition-overlay"
-        style="
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background: rgba(0, 0, 0, 0.85);
-          z-index: 9999;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-        "
-      >
-        <img
-          src="https://i.postimg.cc/RZPWQ0MR/image.png"
-          alt="End Transition"
-          style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
-        />
-        <br />
-        <button id="end-continue-btn" style="font-size: 2em; margin-top: 2em">
-          Continue
-        </button>
-      </div>
+        <div
+          id="transition-overlay"
+          style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <img
+            src="https://i.postimg.cc/Y24df0Gq/image.png"
+            alt="Transition"
+            style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
+          />
+          <br />
+          <button id="continue-btn" style="font-size: 2em; margin-top: 2em">
+            Continue
+          </button>
+        </div>
+        <div
+          id="end-transition-overlay"
+          style="
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+          "
+        >
+          <img
+            src="https://i.postimg.cc/RZPWQ0MR/image.png"
+            alt="End Transition"
+            style="max-width: 80vw; max-height: 60vh; margin-top: 10vh"
+          />
+          <br />
+          <button id="end-continue-btn" style="font-size: 2em; margin-top: 2em">
+            Continue
+          </button>
+        </div>
       </div>
       <div class="leaderboard-container">
         <div class="leaderboard-content">
@@ -384,9 +428,17 @@ function goToNextQuestion() {
   document.body.classList.add("dark-mode");
   localStorage.setItem("darkMode", "true");
 
-  // If on the last question, go to geography section
+  // If on the last question, show end transition overlay instead of redirecting immediately
   if (currentQuestionIndex >= questions.length - 1) {
-    window.location.href = "geography_section.html";
+    var quizContainer = document.getElementById("quiz-container");
+    var overlay = document.getElementById("end-transition-overlay");
+    if (quizContainer) quizContainer.style.display = "none";
+    if (overlay) {
+      overlay.style.display = "flex";
+      overlay.style.visibility = "visible";
+      overlay.style.opacity = "1";
+      overlay.style.zIndex = "9999";
+    }
     return;
   }
 
@@ -394,22 +446,6 @@ function goToNextQuestion() {
   if (currentQuestionIndex === 2) {
     var quizContainer = document.getElementById("quiz-container");
     var overlay = document.getElementById("transition-overlay");
-    if (quizContainer) quizContainer.style.display = "none";
-    if (overlay) {
-      overlay.style.display = "block";
-      overlay.style.visibility = "visible";
-      overlay.style.opacity = "1";
-      overlay.style.zIndex = "9999";
-      // Set transition image if available
-      var img = overlay.querySelector('img');
-      if (img && transitionImages[currentQuestionIndex]) {
-        img.src = transitionImages[currentQuestionIndex];
-      }
-    }
-    return;
-  } else if (currentQuestionIndex === 11) {
-    var quizContainer = document.getElementById("quiz-container");
-    var overlay = document.getElementById("end-transition-overlay");
     if (quizContainer) quizContainer.style.display = "none";
     if (overlay) {
       overlay.style.display = "flex";
@@ -431,7 +467,7 @@ function goToNextQuestion() {
     var quizContainer = document.getElementById("quiz-container");
     if (quizContainer) quizContainer.style.display = "none";
     if (overlay) {
-      overlay.style.display = "block";
+      overlay.style.display = "flex";
       overlay.style.visibility = "visible";
       overlay.style.opacity = "1";
       overlay.style.zIndex = "9999";
@@ -468,18 +504,8 @@ document.getElementById("continue-btn").onclick = function () {
 };
 
 document.getElementById("end-continue-btn").onclick = function () {
-  var quizContainer = document.getElementById("quiz-container");
-  var overlay = document.getElementById("end-transition-overlay");
-  if (quizContainer) quizContainer.style.display = "block";
-  if (overlay) {
-    overlay.style.display = "none";
-    overlay.style.visibility = "hidden";
-    overlay.style.opacity = "0";
-    overlay.style.zIndex = "-1";
-  }
-  currentQuestionIndex++;
-  localStorage.setItem("colorsSectionCurrentQuestionIndex", currentQuestionIndex);
-  loadQuestion();
+  // On end overlay continue, redirect to next section
+  window.location.href = "geography_section.html";
 };
 
       // Ensure userAnswers, currentScore, currentQuestionIndex, attemptCount, hasSuggested are defined globally
@@ -624,35 +650,7 @@ function submitAnswer() {
     <script>
       // Replace your next button handler with this:
       document.getElementById("next-button").onclick = function () {
-        // Always switch to dark mode for the next question
-        document.body.classList.add("dark-mode");
-        localStorage.setItem("darkMode", "true");
-
-        // If on the last question, go to leaderboard
-        if (currentQuestionIndex >= questions.length - 1) {
-          window.location.href = "leaderboard.html";
-          return;
-        }
-
-        if (currentQuestionIndex === 2) {
-          document.getElementById("quiz-container").style.display = "flex";
-          document.getElementById("transition-overlay").style.display = "flex";
-        } else if (currentQuestionIndex === 11) {
-          document.getElementById("quiz-container").style.display = "flex";
-          document.getElementById("end-transition-overlay").style.display =
-            "flex";
-        } else {
-          currentQuestionIndex++;
-          localStorage.setItem(
-            "colorsSectionCurrentQuestionIndex",
-            currentQuestionIndex
-          );
-          // Only load next question if there are more questions
-          if (currentQuestionIndex < questions.length) {
-            loadQuestion();
-          }
-          // If at the end, do nothing (no redirect, no alert)
-        }
+        goToNextQuestion();
       };
 
 
@@ -834,6 +832,26 @@ function submitAnswer() {
   }
 }
 // --- END: Robust submitAnswer and feedback logic (two-attempts) ---
+    </script>
+    <script>
+      // Add Enter key support for answer input and next question
+      document.addEventListener("DOMContentLoaded", function () {
+        var answerInput = document.getElementById("answer");
+        var nextButton = document.getElementById("next-button");
+        var feedback = document.getElementById("feedback");
+        var feedbackVisible = false;
+        if (answerInput) {
+          answerInput.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+              if (nextButton.style.display === "inline-block" || nextButton.style.display === "block") {
+                goToNextQuestion();
+              } else {
+                submitAnswer();
+              }
+            }
+          });
+        }
+      });
     </script>
   </body>
 </html>
