@@ -669,23 +669,6 @@ document.getElementById("end-continue-btn").onclick = function () {
   loadQuestion();
 };
 
-function transitionToLightModeWithImage(newImageSrc, callback) {
-  // Switch background to light mode immediately
-  document.body.classList.remove("dark-mode");
-  localStorage.setItem("darkMode", "false");
-
-  // Fade out the image
-  const questionImage = document.getElementById("question-image");
-  questionImage.classList.add("transitioning");
-
-  setTimeout(() => {
-    questionImage.src = newImageSrc;
-    questionImage.onload = () => {
-      questionImage.classList.remove("transitioning");
-      if (callback) callback();
-    };
-  }, 500); // Match the CSS transition duration
-}
 
 // Google Sign-In function
 function signInWithGoogle() {
@@ -707,3 +690,38 @@ document.getElementById("logout-button").addEventListener("click", () => {
     window.location.href = "index.html";
   });
 });
+
+// New goToNextQuestion function with overlay transition logic
+function goToNextQuestion() {
+  // Hide feedback and next button
+  document.getElementById("feedback").style.display = "none";
+  document.getElementById("feedback-image").style.display = "none";
+  document.getElementById("next-button").style.display = "none";
+  document.getElementById("correct-answer").style.display = "none";
+
+  // Overlay transition for #75 and up (index 11+)
+  if (
+    typeof colorsSection75Index !== 'undefined' &&
+    currentQuestionIndex >= colorsSection75Index &&
+    document.body.classList.contains("dark-mode")
+  ) {
+    let transitionImg = transitionImages[currentQuestionIndex] || "";
+    if (transitionImg) {
+      // Show overlay with transition image and continue button
+      const overlay = document.getElementById("transition-overlay");
+      const overlayImg = document.getElementById("transition-image");
+      overlayImg.src = transitionImg;
+      overlay.style.display = "flex";
+      overlay.style.opacity = 1;
+      overlay.style.zIndex = 9999;
+      overlay.style.pointerEvents = "auto";
+      document.getElementById("quiz-container").style.display = "none";
+      // Do not advance question index or call loadQuestion() until continue is pressed
+      return;
+    }
+  }
+
+  currentQuestionIndex++;
+  localStorage.setItem("colorsSectionCurrentQuestionIndex", currentQuestionIndex);
+  loadQuestion();
+}
