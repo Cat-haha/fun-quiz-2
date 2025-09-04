@@ -241,7 +241,7 @@
         {
           question: "BONUS: 63. What's this?",
           answer: ["sai", "Ψ", "psi"],
-          image: "assets/images/all/brain-teasers/image-016.avif",
+          image: "https://i.postimg.cc/13cXdtQ6/image.png",
           feedbackImage: "",
         },
       ];

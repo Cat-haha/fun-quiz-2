@@ -307,8 +307,8 @@
       const altQ116 = {
         question: "#115. Name any animal except 'spider':",
         answer: [], // We'll handle the logic manually
-        image: "assets/images/all/animals/image-027.avif",
-        feedbackImage: "assets/images/all/animals/image-027.avif",
+        image: "https://i.postimg.cc/1Xkp5TT3/screenshot-12.png",
+        feedbackImage: "https://i.postimg.cc/1Xkp5TT3/screenshot-12.png",
         isAlternate: true,
       };
 

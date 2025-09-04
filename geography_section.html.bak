@@ -240,7 +240,7 @@
           question: "#107. What's this?",
           answer: ["lettuce"],
           image: "assets/images/all/geography/image-043.avif",
-          feedbackImage: "assets/images/all/geography/image-044.avif",
+          feedbackImage: "https://i.postimg.cc/pLmpzCsW/image.png",
         },
       ];
 

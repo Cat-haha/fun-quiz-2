@@ -418,7 +418,7 @@
           question: "#85. What's this?",
           answer: ["celery"],
           image: "assets/images/all/colors/image-021.avif",
-          feedbackImage: "assets/images/all/colors/image-022.avif",
+          feedbackImage: "https://i.postimg.cc/Yq47TVpN/image.png",
         },
       ];
 

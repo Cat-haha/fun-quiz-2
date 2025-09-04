@@ -319,7 +319,7 @@
             "twenty three",
           ],
           image: "",
-          feedbackImage: "assets/images/all/reading/image-014.avif",
+          feedbackImage: "https://i.postimg.cc/L6vjRzgq/image.png",
         },
       ];
 
