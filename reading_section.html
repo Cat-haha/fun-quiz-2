@@ -345,21 +345,6 @@
           }
         });
       }
-      // Add logout button functionality
-      const logoutBtn = document.getElementById("logout-button");
-      if (logoutBtn) {
-        logoutBtn.onclick = function () {
-          if (typeof firebase !== 'undefined' && firebase.auth) {
-            firebase.auth().signOut().then(function () {
-              localStorage.clear();
-              window.location.href = "index.html";
-            });
-          } else {
-            localStorage.clear();
-            window.location.href = "index.html";
-          }
-        };
-      }
 
       // Dark mode toggle
       const darkModeBtn = document.getElementById("dark-mode-toggle");

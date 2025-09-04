@@ -492,22 +492,6 @@ document.getElementById("end-continue-btn").onclick = function () {
       if (typeof currentQuestionIndex === 'undefined') window.currentQuestionIndex = parseInt(localStorage.getItem('currentQuestionIndex') || '0');
       if (typeof attemptCount === 'undefined') window.attemptCount = 0;
       if (typeof hasSuggested === 'undefined') window.hasSuggested = false;
-      
-      // Add logout button functionality
-      const logoutBtn = document.getElementById("logout-button");
-      if (logoutBtn) {
-        logoutBtn.onclick = function () {
-          if (typeof firebase !== 'undefined' && firebase.auth) {
-            firebase.auth().signOut().then(function () {
-              localStorage.clear();
-              window.location.href = "index.html";
-            });
-          } else {
-            localStorage.clear();
-            window.location.href = "index.html";
-          }
-        };
-      }
 
               // --- BEGIN: Robust submitAnswer and feedback logic (two-attempts) ---
 function submitAnswer() {
