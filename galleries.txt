@@ -1,0 +1,6 @@
+animals = https://postimg.cc/gallery/92JRp0V
+brain teasers = https://postimg.cc/gallery/F1VwsPd
+colors = https://postimg.cc/gallery/5vSfkVb
+geography = https://postimg.cc/gallery/q0WVKPb
+math = https://postimg.cc/gallery/QTgbY4v
+reading = https://postimg.cc/gallery/0w3wfpy
