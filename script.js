@@ -668,15 +668,91 @@ document.getElementById("logout-button").addEventListener("click", () => {
   });
 });
 
-// New goToNextQuestion function with overlay transition logic
 function goToNextQuestion() {
-  // Hide feedback and next button
-  document.getElementById("feedback").style.display = "none";
-  document.getElementById("feedback-image").style.display = "none";
-  document.getElementById("next-button").style.display = "none";
-  document.getElementById("correct-answer").style.display = "none";
-
+  hasSuggested = false;
   currentQuestionIndex++;
-  localStorage.setItem("colorsSectionCurrentQuestionIndex", currentQuestionIndex);
-  loadQuestion();
+
+  // Check what page we're on
+  const currentPage = window.location.pathname;
+
+  // Special logic for the Colors section
+  if (currentPage.includes("colors_section.html")) {
+    // Show overlay after 3rd question (index 2)
+    if (currentQuestionIndex === 2) {
+      var overlay = document.getElementById("transition-overlay");
+      overlay.style.display = "flex";
+
+      document.getElementById("continue-btn").onclick = function () {
+        document.getElementById("transition-overlay").style.display = "none";
+        document.getElementById("quiz-container").style.display = "";
+        currentQuestionIndex++;
+        localStorage.setItem("colorsSectionCurrentQuestionIndex", currentQuestionIndex);
+        loadQuestion();
+      };
+      return; // stop here until user continues
+    }
+
+    // Show overlay after 12th question (index 11)
+    if (currentQuestionIndex === 11) {
+      var overlay = document.getElementById("end-transition-overlay");
+      overlay.style.display = "flex";
+
+      document.getElementById("end-continue-btn").onclick = function () {
+        document.getElementById("end-transition-overlay").style.display = "none";
+        document.getElementById("quiz-container").style.display = "";
+        currentQuestionIndex++;
+        localStorage.setItem("colorsSectionCurrentQuestionIndex", currentQuestionIndex);
+        loadQuestion();
+      };
+      return; // stop here until user continues
+    }
+  }
+
+  // If finished all questions
+  if (currentQuestionIndex >= questions.length) {
+    // Save progress
+    localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
+
+    if (currentPage.includes("index.html")) {
+      alert("You finished the Warmup Section! Now taking you to the Math Section. Press OK to continue.");
+      document.addEventListener("keydown", function () {
+        window.location.href = "math_section.html";
+      }, { once: true });
+
+    } else if (currentPage.includes("math_section.html")) {
+      alert("You finished the Math Section! Now taking you to the Reading Section. Press OK to continue.");
+      document.addEventListener("keydown", function () {
+        window.location.href = "reading_section.html";
+      }, { once: true });
+
+    } else if (currentPage.includes("reading_section.html")) {
+      alert("You finished the Reading Section! Now taking you to the Brain Teasers Section. Press OK to continue.");
+      document.addEventListener("keydown", function () {
+        window.location.href = "brain_teasers.html";
+      }, { once: true });
+
+    } else if (currentPage.includes("brain_teasers.html")) {
+      alert("You finished the Brain Teasers Section! Now taking you to the Colors Section. Press OK to continue.");
+      document.addEventListener("keydown", function () {
+        window.location.href = "colors_section.html";
+      }, { once: true });
+
+    } else if (currentPage.includes("colors_section.html")) {
+      alert("You finished the Colors Section! Now taking you to the Geography Section. Press OK to continue.");
+      document.addEventListener("keydown", function () {
+        window.location.href = "geography_section.html";
+      }, { once: true });
+
+    } else if (currentPage.includes("geography_section.html")) {
+      alert("You finished the Geography Section! Now taking you to the Animals Section. Press OK to continue.");
+      document.addEventListener("keydown", function () {
+        window.location.href = "animals_section.html";
+      }, { once: true });
+    }
+
+  } else {
+    // Otherwise, load next question normally
+    loadQuestion();
+  }
 }
+

@@ -361,32 +361,6 @@
       if (localStorage.getItem("darkMode") === "true") {
         document.body.classList.add("dark-mode");
       }
-
-            function goToNextQuestion() {
-        hasSuggested = false;
-        currentQuestionIndex += 1;
-        localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
-
-        if (currentQuestionIndex >= questions.length) {
-          // Save the index before ending the quiz
-          localStorage.setItem("currentQuestionIndex", currentQuestionIndex);
-
-          // After the quiz ends, wait for a key press to go to next section
-          alert(
-            "You finished the Reading Section! Now taking you to the Brain Teasers Section. Press OK to continue."
-          );
-          document.addEventListener(
-            "keydown",
-            function () {
-              window.location.href = "brain_teasers.html";
-            },
-            { once: true }
-          );
-        } else {
-          // Only load the next question, do not increment index again
-          loadQuestion();
-        }
-      }
     </script>
     <script>
       function submitAnswer() {
