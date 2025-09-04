@@ -259,21 +259,17 @@
         var nextButton = document.getElementById("next-button");
         var feedback = document.getElementById("feedback");
         var feedbackVisible = false;
-        if (answerInput) {
-          answerInput.addEventListener("keydown", function (e) {
-            if (e.key === "Enter") {
-              if (nextButton.style.display === "inline-block" || nextButton.style.display === "block") {
-                goToNextQuestion();
-              } else {
-                submitAnswer();
-              }
+      if (answerInput) {
+        answerInput.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") {
+            // Only submit answer if feedback is NOT showing (i.e., Next button is hidden)
+            if (nextButton && nextButton.style.display === "block") {
+              goToNextQuestion();
             }
-          });
-        }
-      });
-      if (nextButton) {
-        nextButton.addEventListener("click", goToNextQuestion);
+          }
+        });
       }
+      });
 
       // Helper to wait for loadQuestion and call it after login
       function callLoadQuestionWhenReady() {
