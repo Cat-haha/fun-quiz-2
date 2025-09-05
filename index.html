@@ -49,6 +49,7 @@
     <button id="logout-button" style="display: none">Logout</button>
     <button id="google-signin-btn" onclick="signInWithGoogle()">Sign in with Google</button>
     <p id="user-info"></p>
+        <div id="signin-text" style="display: none; font-size: large;">Sign in with google to start the quiz.</div>
     <div class="body-container">
       <div id="quiz-container" style="display: none">
         <marquee class="marqueeH1" direction="right">
@@ -116,10 +117,11 @@
       document.addEventListener("DOMContentLoaded", function () {
         firebase.auth().onAuthStateChanged(function(user) {
           const quizContainer = document.getElementById("quiz-container");
-          const leaderboard = document.querySelector(".leaderboard-container");
+          const leaderboard = document.querySelector("leaderboard-container");
           const userInfo = document.getElementById("user-info");
           const signInBtn = document.getElementById("google-signin-btn");
           const logoutBtn = document.getElementById("logout-button");
+          const signInText = document.getElementById("signin-text");
           if (user) {
             // Save user info to localStorage for consistency
             localStorage.setItem("playerName", user.displayName);
@@ -130,9 +132,8 @@
             signInBtn.style.display = "none";
             logoutBtn.style.display = "inline-block";
           } else {
-            userInfo.textContent = "";
-            quizContainer.style.display = "block";
-            quizContainer.textContent = "Log in with Google to start the quiz."
+            quizContainer.style.display = "none";
+            signInText.style.display = "block";
             leaderboard.style.display = "none";
             signInBtn.style.display = "inline-block";
             logoutBtn.style.display = "none";
@@ -150,28 +151,6 @@
         }
         attachLogoutHandler();
         new MutationObserver(attachLogoutHandler).observe(document.body, {childList: true, subtree: true});
-      });
-      document.addEventListener("DOMContentLoaded", function () {
-        const userInfo = document.getElementById("user-info");
-        const quizContainer = document.getElementById("quiz-container");
-        const leaderboard = document.querySelector(".leaderboard-container");
-        const signInBtn = document.getElementById("google-signin-btn");
-        const logoutBtn = document.getElementById("logout-button");
-        const playerName = localStorage.getItem("playerName");
-        const playerEmail = localStorage.getItem("playerEmail");
-        if (playerName && playerEmail) {
-          userInfo.textContent = `Logged in as: ${playerName} || Email: ${playerEmail}`;
-          if (quizContainer) quizContainer.style.display = "block";
-          if (leaderboard) leaderboard.style.display = "block";
-          signInBtn.style.display = "none";
-          logoutBtn.style.display = "inline-block";
-          // Show first question if logged in and quiz UI is visible
-          if (typeof callLoadQuestionWhenReady === 'function') {
-            callLoadQuestionWhenReady();
-          } else if (typeof loadQuestion === 'function') {
-            loadQuestion();
-          }
-        }
       });
       function signInWithGoogle() {
         var provider = new firebase.auth.GoogleAuthProvider();
