@@ -117,6 +117,8 @@ button {
   box-shadow: 3px 3px 0 #000088;
   cursor: pointer;
   text-shadow: 1px 1px 0 #000;
+  cursor: pointer;
+  transition: background 0.3s, box-shadow 0.3s;
 }
 
 button:hover {
@@ -127,6 +129,10 @@ button:hover {
 #logout-button {
   margin: 10px;
   align-self: flex-end;
+  border-top-left-radius: 25px;
+  border-bottom-left-radius: 25px;
+  border-top-right-radius: 25px;
+  border-bottom-right-radius: 25px;
 }
 
 #suggestions {
