@@ -323,7 +323,18 @@ function submitAnswer() {
 
   if (question.type === "click") return;
 
-  // === Lettuce easter egg ===
+        // === Lettuce easter egg for Digiorno (#11) only ===
+        if (
+          currentQuestionIndex === 10 &&
+          userAnswer.trim().toLowerCase() === "lettuce"
+        ) {
+          feedback.textContent = "HINT: It's not lettuce";
+          if (question.hintImage) {
+            feedbackImage.src = question.hintImage;
+            feedbackImage.style.display = "block";
+          }
+          return;
+        }
 
   const acceptedAnswers = Array.isArray(question.answer)
     ? question.answer.map((a) => a.trim().toLowerCase())
@@ -341,73 +352,141 @@ function submitAnswer() {
     return;
   }
 
-  // === Log answer only once ===
-  if (!question.loggedAnswer) {
-    userAnswers.push({
-      questionIndex: currentQuestionIndex,
-      questionText: question.question,
-      userAnswer: userAnswer,
-      acceptedAnswers,
-      isCorrect,
-      questionType: "text"
-    });
-    question.loggedAnswer = true;
-    localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
-  }
+        // === Digiorno special feedback for #11 ===
+        if (currentQuestionIndex === 10) {
+          const digiornoAnswers = [
+            "digiorno",
+            "it's digiorno",
+            "its digiorno",
+            "di giorno",
+            "di-giorno",
+          ];
+          const userAns = userAnswer.trim().toLowerCase();
+          if (digiornoAnswers.includes(userAns)) {
+            feedback.textContent = `✅ Correct! It's Digiorno!`;
+            suggestionBox.style.display = "none";
+            let answeredQuestions = JSON.parse(
+              localStorage.getItem("answeredQuestions") || "[]"
+            );
+            if (!answeredQuestions.includes(currentQuestionIndex)) {
+              currentScore++;
+              updateUserInfo();
+              localStorage.setItem("currentScore", currentScore);
+              answeredQuestions.push(currentQuestionIndex);
+              localStorage.setItem(
+                "answeredQuestions",
+                JSON.stringify(answeredQuestions)
+              );
+              question.answeredCorrectly = true;
+            }
+            // Always show correct answer(s)
+            correctAnswerDiv.textContent = `Correct answer(s): digiorno`;
+            correctAnswerDiv.style.display = "block";
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+            nextButton.style.display = "inline-block";
+            hasSuggested = false;
+            // Reset attemptCount for next question
+            attemptCount = 0;
+            return;
+          } else {
+            // Track attempts for this question only
+            if (typeof window.digiornoAttemptCount === "undefined") {
+              window.digiornoAttemptCount = 1;
+            } else {
+              window.digiornoAttemptCount++;
+            }
+            if (window.digiornoAttemptCount >= 2) {
+              feedback.textContent = `It's not ${userAnswer}, it's Digiorno!`;
+              suggestionBox.style.display = "none";
+              correctAnswerDiv.textContent = `Correct answer(s): digiorno`;
+              correctAnswerDiv.style.display = "block";
+              nextButton.style.display = "inline-block";
+              if (question.feedbackImage) {
+                feedbackImage.src = question.feedbackImage;
+                feedbackImage.style.display = "block";
+              }
+              // Reset for next time this question is loaded
+              window.digiornoAttemptCount = 0;
+              // Reset attemptCount for next question
+              attemptCount = 0;
+            } else {
+              feedback.textContent = "❌ Incorrect. Try again!";
+            }
+            return;
+          }
+        }
 
-  // === Show feedback ===
-  if (isCorrect) {
-    feedback.textContent = "✅ Correct!";
-    suggestionBox.style.display = "none";
+        // === Log answer only once ===
+        if (!question.loggedAnswer) {
+          userAnswers.push({
+            questionIndex: currentQuestionIndex,
+            questionText: question.question,
+            userAnswer: userAnswer,
+            acceptedAnswers,
+            isCorrect,
+            questionType: "text",
+          });
+          question.loggedAnswer = true;
 
-    // Prevent infinite score abuse
-    let answeredQuestions = JSON.parse(
-      localStorage.getItem("answeredQuestions") || "[]"
-    );
-    if (!answeredQuestions.includes(currentQuestionIndex)) {
-      currentScore++;
-      updateUserInfo();
-      localStorage.setItem("currentScore", currentScore);
-      answeredQuestions.push(currentQuestionIndex);
-      localStorage.setItem(
-        "answeredQuestions",
-        JSON.stringify(answeredQuestions)
-      );
-      question.answeredCorrectly = true;
-    }
+          // 💾 Save to localStorage
+          localStorage.setItem("userAnswers", JSON.stringify(userAnswers));
+        }
 
-    if (question.feedbackImage) {
-      feedbackImage.src = question.feedbackImage;
-      feedbackImage.style.display = "block";
-    }
+        // === Show feedback ===
+        if (isCorrect) {
+          feedback.textContent = "✅ Correct!";
+          suggestionBox.style.display = "none";
 
-    correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
-    correctAnswerDiv.style.display = "block";
+          // Prevent infinite score abuse
+          let answeredQuestions = JSON.parse(
+            localStorage.getItem("answeredQuestions") || "[]"
+          );
+          if (!answeredQuestions.includes(currentQuestionIndex)) {
+            currentScore++;
+            updateUserInfo();
+            localStorage.setItem("currentScore", currentScore);
+            answeredQuestions.push(currentQuestionIndex);
+            localStorage.setItem(
+              "answeredQuestions",
+              JSON.stringify(answeredQuestions)
+            );
+            question.answeredCorrectly = true;
+          }
 
-    nextButton.style.display = "inline-block";
-    hasSuggested = false;
+          // Always show correct answer(s)
+          correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+          correctAnswerDiv.style.display = "block";
+          if (question.feedbackImage) {
+            feedbackImage.src = question.feedbackImage;
+            feedbackImage.style.display = "block";
+          }
+          nextButton.style.display = "inline-block";
+          hasSuggested = false;
+          // Reset attemptCount for next question
+          attemptCount = 0;
+        } else {
+          attemptCount = typeof attemptCount === "undefined" ? 1 : attemptCount + 1;
+          if (attemptCount >= 2) {
+            feedback.textContent = "❌ Incorrect.";
+            suggestionBox.style.display = "none";
 
-    return;
-  } else {
-    attemptCount++;
-    if (attemptCount >= 2) {
-      feedback.textContent = "❌ Incorrect.";
-      suggestionBox.style.display = "none";
-      correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
-      correctAnswerDiv.style.display = "block";
-      nextButton.style.display = "inline-block";
-
-      if (question.feedbackImage) {
-        feedbackImage.src = question.feedbackImage;
-        feedbackImage.style.display = "block";
+            correctAnswerDiv.textContent = `Correct answer(s): ${acceptedAnswers.join(", ")}`;
+            correctAnswerDiv.style.display = "block";
+            nextButton.style.display = "inline-block";
+            if (question.feedbackImage) {
+              feedbackImage.src = question.feedbackImage;
+              feedbackImage.style.display = "block";
+            }
+            // Reset attemptCount for next question
+            attemptCount = 0;
+          } else {
+            feedback.textContent = "❌ Incorrect. Try again!";
+          }
+        }
       }
-
-      return;
-    } else {
-      feedback.textContent = "❌ Incorrect. Try again!";
-    }
-  }
-}
 
 
 function logoutPlayer() {
