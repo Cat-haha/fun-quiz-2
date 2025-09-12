@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# Input HTML file (your quiz file)
+HTML_FILE="index.html"
+# Temporary output file
+TMP_FILE="index_tmp.html"
+# Output directory on disk
+OUT_DIR="./assets/images/all/warmup"
+# Path used in HTML (relative for browser)
+HTML_PATH="assets/images/all/warmup"
+
+# Make sure output directory exists
+mkdir -p "$OUT_DIR"
+
+# Copy HTML to a temp file we will edit
+cp "$HTML_FILE" "$TMP_FILE"
+
+# Extract all unique postimg links
+grep -oP '(https://i\.postimg\.cc/[^\"]+)' "$HTML_FILE" | sort -u | while read -r url; do
+    # Get original filename
+    filename=$(basename "$url" | cut -d'?' -f1)
+    base="${filename%.*}"
+
+    # Local AVIF destination
+    local_file="$OUT_DIR/$base.avif"
+    html_file="$HTML_PATH/$base.avif"
+
+    echo "📥 Processing $url → $local_file"
+
+    # Download image
+    wget -q "$url" -O "$OUT_DIR/$filename"
+
+    # Convert to AVIF (requires ImageMagick with AVIF support)
+    if command -v magick >/dev/null 2>&1; then
+        magick "$OUT_DIR/$filename" "$local_file"
+    elif command -v convert >/dev/null 2>&1; then
+        convert "$OUT_DIR/$filename" "$local_file"
+    else
+        echo "❌ No image conversion tool found (install ImageMagick with AVIF support)."
+        rm "$OUT_DIR/$filename"
+        exit 1
+    fi
+
+    # Remove original download
+    rm "$OUT_DIR/$filename"
+
+    # Replace URL with local AVIF path in HTML
+    sed -i "s|$url|$html_file|g" "$TMP_FILE"
+done
+
+# Replace original HTML with updated one
+mv "$TMP_FILE" "$HTML_FILE"
+
+echo "✅ Done! Images saved in '$OUT_DIR' and HTML updated."
